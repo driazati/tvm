@@ -47,6 +47,8 @@ def test_skip_ci():
             # Jenkins git is too old and doesn't have 'git init --initial-branch'
             git.run("init")
             git.run("checkout", "-b", "main")
+            git.run("config", "user.name", "ci")
+            git.run("config", "user.email", "email@example.com")
             git.run("commit", "--allow-empty", "--message", "base commit")
             for command in commands:
                 git.run(*command)

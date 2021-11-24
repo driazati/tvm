@@ -162,6 +162,10 @@ stage('Sanity Check') {
           script: './tests/scripts/git_skip_ci.sh',
           label: "Check if CI should be skipped",
         )
+        // if (skip_ci == 1) {
+        //   githubPRAddLabels(labelProperty: "CI was skipped")
+        // }
+        githubPRAddLabels(labelProperty: "CI was skipped")
         sh "${docker_run} ${ci_lint}  ./tests/scripts/task_lint.sh"
       }
     }

@@ -25,12 +25,12 @@ set -eux
 # The script will return 1 if any of these are found in the HEAD commit message
 # headline
 
-if git log --format='%s' HEAD~1..HEAD | grep --quiet \
-    --regexp='\[skip ci\]' \
-    --regexp='\[ci skip\]' \
-    --regexp='\[no ci\]' \
-    --regexp='\[skip actions\]' \
-    --regexp='\[actions skip\]'; then
+if [ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]; then
+    # don't skip CI on main
+    exit 0
+fi
+
+if git log --format='%s' -1 | grep --quiet --regexp='\[skip ci\]'; then
     # last commit message subject matched one of the tags, exit with 1 to
     # tell Jenkins to skip subsequent jobs
     exit 1

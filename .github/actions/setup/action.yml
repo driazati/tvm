@@ -11,6 +11,7 @@ runs:
     with:
       activate-environment: tvm-build
       channel-priority: strict
+      python-version: "3.9"
       environment-file: conda/build-environment.yaml
       auto-activate-base: false
       use-only-tar-bz2: true

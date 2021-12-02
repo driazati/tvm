@@ -47,6 +47,7 @@
 #
 # COMMAND (optional): Command to be executed in the docker container
 #
+set -x
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Get the command line arguments.

@@ -17,7 +17,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set -eux
+set -euxo pipefail
 
 # This implements the skip commands found here:
 # https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/
@@ -25,8 +25,18 @@ set -eux
 # The script will return 1 if any of these are found in the HEAD commit message
 # headline
 
+# Usage: ./git_skip_ci.sh <pr number>
+
+PR_NUMBER=$1
+
+if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+    echo "Not skipping CI on a branch"
+    exit 0
+fi
+
+
 if [ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]; then
-    # don't skip CI on main
+    echo "Not skipping CI on main"
     exit 0
 fi
 

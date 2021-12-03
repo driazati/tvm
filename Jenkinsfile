@@ -117,6 +117,15 @@ def cancel_previous_build() {
   }
 }
 
+def add_pr_label(label_name) {
+  withCredentials([string(credentialsId: 'temp-jenkins', variable: 'TOKEN')]) {
+    sh (
+      script: "./tests/scripts/github_label_pr.sh ${env.CHANGE_ID} '${label_name}'",
+      label: "Add ${label_name} label to GitHub PR",
+    )
+  }
+}
+
 cancel_previous_build()
 
 stage('Prepare') {
@@ -159,14 +168,12 @@ stage('Sanity Check') {
         )
         skip_ci = sh (
           returnStatus: true,
-          script: './tests/scripts/git_skip_ci.sh',
-          label: "Check if CI should be skipped",
+          script: "./tests/scripts/git_skip_ci.sh '${env.CHANGE_ID}'",
+          label: 'Check if CI should be skipped',
         )
-        // if (skip_ci == 1) {
-        //   githubPRAddLabels(labelProperty: "CI was skipped")
-        // }
-        githubPRAddLabels(labelProperty: "CI was skipped")
-        sh "${docker_run} ${ci_lint}  ./tests/scripts/task_lint.sh"
+        if (skip_ci == 1) {
+          add_pr_label('ci-skipped')
+        }
       }
     }
   }

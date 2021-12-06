@@ -367,7 +367,7 @@ stage('Build') {
   }
 }
 
-stage('Unit Test') {
+stage('Test') {
     parallel 'python3: GPU': {
       if (is_docs_only_build != 1) {
         node('TensorCore') {
@@ -478,11 +478,8 @@ stage('Unit Test') {
       } else {
          Utils.markStageSkippedForConditional('java: GPU')
       }
-    }
-}
-
-stage('Integration Test') {
-  parallel 'topi: GPU': {
+    },
+    'topi: GPU': {
   if (is_docs_only_build != 1) {
     node('GPU') {
       ws(per_exec_ws('tvm/topi-python-gpu')) {

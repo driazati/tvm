@@ -368,136 +368,136 @@ stage('Build') {
 }
 
 stage('Test') {
-    parallel 'python3: GPU': {
-      if (is_docs_only_build != 1) {
-        node('TensorCore') {
-          ws(per_exec_ws('tvm/ut-python-gpu')) {
-            init_git()
+  parallel 'python3: GPU': {
+    if (is_docs_only_build != 1) {
+      node('TensorCore') {
+        ws(per_exec_ws('tvm/ut-python-gpu')) {
+          init_git()
+          unpack_lib('gpu', tvm_multilib)
+          timeout(time: max_time, unit: 'MINUTES') {
+            ci_setup(ci_gpu)
+            sh (
+              script: "${docker_run} ${ci_gpu} ./tests/scripts/task_sphinx_precheck.sh",
+              label: "Check Sphinx warnings in docs",
+            )
+            sh (
+              script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_unittest_gpuonly.sh",
+              label: "Run Python GPU unit tests",
+            )
+            sh (
+              script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_integration_gpuonly.sh",
+              label: "Run Python GPU integration tests",
+            )
+            junit "build/pytest-results/*.xml"
+          }
+        }
+      }
+    } else {
+      Utils.markStageSkippedForConditional('python3: GPU')
+    }
+  },
+  'python3: CPU': {
+    if (is_docs_only_build != 1) {
+      node('CPU') {
+        ws(per_exec_ws("tvm/ut-python-cpu")) {
+          init_git()
+          unpack_lib('cpu', tvm_multilib_tsim)
+          timeout(time: max_time, unit: 'MINUTES') {
+            ci_setup(ci_cpu)
+            sh (
+              script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_integration.sh",
+              label: "Run CPU integration tests",
+            )
+            junit "build/pytest-results/*.xml"
+          }
+        }
+      }
+    } else {
+      Utils.markStageSkippedForConditional('python3: CPU')
+    }
+  },
+  'python3: i386': {
+    if (is_docs_only_build != 1) {
+      node('CPU') {
+        ws(per_exec_ws('tvm/ut-python-i386')) {
+          init_git()
+          unpack_lib('i386', tvm_multilib)
+          timeout(time: max_time, unit: 'MINUTES') {
+            ci_setup(ci_i386)
+            python_unittest(ci_i386)
+            sh (
+              script: "${docker_run} ${ci_i386} ./tests/scripts/task_python_integration_i386only.sh",
+              label: "Run i386 integration tests",
+            )
+            fsim_test(ci_i386)
+            junit "build/pytest-results/*.xml"
+          }
+        }
+      }
+    } else {
+      Utils.markStageSkippedForConditional('python3: i386')
+    }
+  },
+  'python3: arm': {
+    if (is_docs_only_build != 1) {
+      node('ARM') {
+        ws(per_exec_ws('tvm/ut-python-arm')) {
+          init_git()
+          unpack_lib('arm', tvm_multilib)
+          timeout(time: max_time, unit: 'MINUTES') {
+            ci_setup(ci_arm)
+            python_unittest(ci_arm)
+            sh (
+              script: "${docker_run} ${ci_arm} ./tests/scripts/task_python_arm_compute_library.sh",
+              label: "Run test_arm_compute_lib test",
+            )
+            junit "build/pytest-results/*.xml"
+          // sh "${docker_run} ${ci_arm} ./tests/scripts/task_python_integration.sh"
+          }
+        }
+      }
+    } else {
+        Utils.markStageSkippedForConditional('python3: arm')
+    }
+  },
+  'java: GPU': {
+    if (is_docs_only_build != 1 ) {
+      node('GPU') {
+        ws(per_exec_ws('tvm/ut-java')) {
+          init_git()
             unpack_lib('gpu', tvm_multilib)
             timeout(time: max_time, unit: 'MINUTES') {
               ci_setup(ci_gpu)
               sh (
-                script: "${docker_run} ${ci_gpu} ./tests/scripts/task_sphinx_precheck.sh",
-                label: "Check Sphinx warnings in docs",
+                script: "${docker_run} ${ci_gpu} ./tests/scripts/task_java_unittest.sh",
+                label: "Run Java unit tests",
               )
-              sh (
-                script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_unittest_gpuonly.sh",
-                label: "Run Python GPU unit tests",
-              )
-              sh (
-                script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_integration_gpuonly.sh",
-                label: "Run Python GPU integration tests",
-              )
-              junit "build/pytest-results/*.xml"
             }
-          }
-        }
-      } else {
-        Utils.markStageSkippedForConditional('python3: GPU')
-      }
-    },
-    'python3: CPU': {
-      if (is_docs_only_build != 1) {
-        node('CPU') {
-          ws(per_exec_ws("tvm/ut-python-cpu")) {
-            init_git()
-            unpack_lib('cpu', tvm_multilib_tsim)
-            timeout(time: max_time, unit: 'MINUTES') {
-              ci_setup(ci_cpu)
-              sh (
-                script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_integration.sh",
-                label: "Run CPU integration tests",
-              )
-              junit "build/pytest-results/*.xml"
-            }
-          }
-        }
-      } else {
-        Utils.markStageSkippedForConditional('python3: CPU')
-      }
-    },
-    'python3: i386': {
-      if (is_docs_only_build != 1) {
-        node('CPU') {
-          ws(per_exec_ws('tvm/ut-python-i386')) {
-            init_git()
-            unpack_lib('i386', tvm_multilib)
-            timeout(time: max_time, unit: 'MINUTES') {
-              ci_setup(ci_i386)
-              python_unittest(ci_i386)
-              sh (
-                script: "${docker_run} ${ci_i386} ./tests/scripts/task_python_integration_i386only.sh",
-                label: "Run i386 integration tests",
-              )
-              fsim_test(ci_i386)
-              junit "build/pytest-results/*.xml"
-            }
-          }
-        }
-     } else {
-        Utils.markStageSkippedForConditional('python3: i386')
-      }
-    },
-    'python3: arm': {
-      if (is_docs_only_build != 1) {
-        node('ARM') {
-          ws(per_exec_ws('tvm/ut-python-arm')) {
-            init_git()
-            unpack_lib('arm', tvm_multilib)
-            timeout(time: max_time, unit: 'MINUTES') {
-              ci_setup(ci_arm)
-              python_unittest(ci_arm)
-              sh (
-                script: "${docker_run} ${ci_arm} ./tests/scripts/task_python_arm_compute_library.sh",
-                label: "Run test_arm_compute_lib test",
-              )
-              junit "build/pytest-results/*.xml"
-            // sh "${docker_run} ${ci_arm} ./tests/scripts/task_python_integration.sh"
-            }
-          }
-        }
-      } else {
-         Utils.markStageSkippedForConditional('python3: arm')
-      }
-    },
-    'java: GPU': {
-      if (is_docs_only_build != 1 ) {
-        node('GPU') {
-          ws(per_exec_ws('tvm/ut-java')) {
-            init_git()
-              unpack_lib('gpu', tvm_multilib)
-              timeout(time: max_time, unit: 'MINUTES') {
-                ci_setup(ci_gpu)
-                sh (
-                  script: "${docker_run} ${ci_gpu} ./tests/scripts/task_java_unittest.sh",
-                  label: "Run Java unit tests",
-                )
-              }
-          }
-        }
-      } else {
-         Utils.markStageSkippedForConditional('java: GPU')
-      }
-    },
-    'topi: GPU': {
-  if (is_docs_only_build != 1) {
-    node('GPU') {
-      ws(per_exec_ws('tvm/topi-python-gpu')) {
-        init_git()
-        unpack_lib('gpu', tvm_multilib)
-        timeout(time: max_time, unit: 'MINUTES') {
-          ci_setup(ci_gpu)
-          sh (
-            script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_topi.sh",
-            label: "Run TOPI tests",
-          )
-          junit "build/pytest-results/*.xml"
         }
       }
-    }
     } else {
-      Utils.markStageSkippedForConditional('topi: GPU')
-  }
+        Utils.markStageSkippedForConditional('java: GPU')
+    }
+  },
+  'topi: GPU': {
+    if (is_docs_only_build != 1) {
+      node('GPU') {
+        ws(per_exec_ws('tvm/topi-python-gpu')) {
+          init_git()
+          unpack_lib('gpu', tvm_multilib)
+          timeout(time: max_time, unit: 'MINUTES') {
+            ci_setup(ci_gpu)
+            sh (
+              script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_topi.sh",
+              label: "Run TOPI tests",
+            )
+            junit "build/pytest-results/*.xml"
+          }
+        }
+      }
+      } else {
+        Utils.markStageSkippedForConditional('topi: GPU')
+    }
   },
   'frontend: GPU': {
     if (is_docs_only_build != 1) {
@@ -515,7 +515,7 @@ stage('Test') {
           }
         }
       }
-     } else {
+    } else {
       Utils.markStageSkippedForConditional('frontend: GPU')
     }
   },

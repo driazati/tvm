@@ -52,7 +52,8 @@ def test_skip_ci():
             git.run("commit", "--allow-empty", "--message", "base commit")
             for command in commands:
                 git.run(*command)
-            proc = subprocess.run([str(skip_ci_script)], cwd=dir)
+            pr_number = "1234"
+            proc = subprocess.run([str(skip_ci_script), pr_number], cwd=dir)
             expected = 1 if should_skip else 0
             assert proc.returncode == expected, why
 

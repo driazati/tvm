@@ -117,11 +117,11 @@ def cancel_previous_build() {
   }
 }
 
-def add_pr_label(label_name) {
+def mark_pr_skipped(pr_number) {
   withCredentials([string(credentialsId: 'temp-jenkins', variable: 'TOKEN')]) {
     sh (
-      script: "./tests/scripts/github_label_pr.sh ${env.CHANGE_ID} '${label_name}'",
-      label: "Add ${label_name} label to GitHub PR",
+      script: "python ./tests/scripts/github_mark_pr_skipped.py ${pr_number}",
+      label: "Add [skip ci] to PR title and ci-skipped label",
     )
   }
 }
@@ -172,7 +172,7 @@ stage('Sanity Check') {
           label: 'Check if CI should be skipped',
         )
         if (skip_ci == 1) {
-          add_pr_label('ci-skipped')
+          mark_pr_skipped(env.CHANGE_ID)
         }
       }
     }

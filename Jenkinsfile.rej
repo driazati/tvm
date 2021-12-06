@@ -1,0 +1,12 @@
+--- Jenkinsfile
++++ Jenkinsfile
+@@ -496,6 +508,9 @@ stage('Integration Test') {
+ 
+ /*
+ stage('Build packages') {
++  environment {
++    CI = 'true'
++  }
+   parallel 'conda CPU': {
+     node('CPU') {
+       sh "${docker_run} tlcpack/conda-cpu ./conda/build_cpu.sh

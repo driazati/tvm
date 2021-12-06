@@ -32,7 +32,35 @@ export PYTHONPATH="${TVM_PATH}/python"
 export TVM_PYTEST_RESULT_DIR="${TVM_PATH}/build/pytest-results"
 mkdir -p "${TVM_PYTEST_RESULT_DIR}"
 
+if [ -n "${CI_CPUSET_NUM_CPUS-}" ]; then
+    # When the # of CPUs has been restricted (e.g. when --cpuset-cpus has been passed to docker by
+    # docker/bash.sh), explicitly use all available CPUs. This environment variable is set by
+    # docker/bash.sh when it sets --cpuset-cpus.
+    PYTEST_NUM_CPUS="${CI_CPUSET_NUM_CPUS}"
+else
+    # Else attempt to use $(nproc) - 1.
+    PYTEST_NUM_CPUS=$(nproc)
+    if [ -z "${PYTEST_NUM_CPUS}" ]; then
+        echo "WARNING: nproc failed; running pytest with only 1 CPU"
+        PYTEST_NUM_CPUS=1
+    elif [ ${PYTEST_NUM_CPUS} -gt 1 ]; then
+        PYTEST_NUM_CPUS=$(expr ${PYTEST_NUM_CPUS} - 1)  # Don't nuke interactive work.
+    fi
+
+    # Don't use >4 CPUs--in general, we only use 4 CPUs in testing, so we want to retain this
+    # maximum for the purposes of reproducing the CI. You can still override this by setting
+    # --cpuset-cpus in docker/bash.sh.
+    if [ ${PYTEST_NUM_CPUS} -gt 4 ]; then
+        PYTEST_NUM_CPUS=4
+    fi
+fi
+
 function run_pytest() {
+    local extra_args=( )
+    if [ "$1" == "--parallel" ]; then
+        extra_args=( -n "${PYTEST_NUM_CPUS}" )
+        shift
+    fi
     local ffi_type="$1"
     shift
     local test_suite_name="$1"
@@ -43,8 +71,10 @@ function run_pytest() {
         exit 2
     fi
     TVM_FFI=${ffi_type} python3 -m pytest \
+           --timeout=480 \
            -o "junit_suite_name=${test_suite_name}-${ffi_type}" \
            "--junit-xml=${TVM_PYTEST_RESULT_DIR}/${test_suite_name}-${ffi_type}.xml" \
            "--junit-prefix=${ffi_type}" \
+           "${extra_args[@]}" \
            "$@"
 }

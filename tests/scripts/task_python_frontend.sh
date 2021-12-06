@@ -35,7 +35,7 @@ echo "Running relay MXNet frontend test..."
 run_pytest cython python-frontend-mxnet tests/python/frontend/mxnet
 
 echo "Running relay ONNX frontend test..."
-run_pytest cython python-frontend-onnx tests/python/frontend/onnx
+run_pytest --parallel cython python-frontend-onnx tests/python/frontend/onnx
 
 echo "Running relay CoreML frontend test..."
 run_pytest cython python-frontend-coreml tests/python/frontend/coreml
@@ -50,7 +50,7 @@ echo "Running relay DarkNet frontend test..."
 run_pytest cython python-frontend-darknet tests/python/frontend/darknet
 
 echo "Running relay PyTorch frontend test..."
-run_pytest cython python-frontend-pytorch tests/python/frontend/pytorch
+run_pytest --parallel cython python-frontend-pytorch tests/python/frontend/pytorch
 
 echo "Running relay PaddlePaddle frontend test..."
-run_pytest cython python-frontend-paddlepaddle tests/python/frontend/paddlepaddle
+run_pytest --parallel cython python-frontend-paddlepaddle tests/python/frontend/paddlepaddle

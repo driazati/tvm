@@ -18,6 +18,7 @@
 
 set -e
 set -u
+set -x
 
 source tests/scripts/setup-pytest-env.sh
 
@@ -31,9 +32,9 @@ if [ -z "${TVM_UNITTEST_TESTSUITE_NAME:-}" ]; then
 fi
 
 # First run minimal test on both ctypes and cython.
-run_pytest ctypes ${TVM_UNITTEST_TESTSUITE_NAME}-platform-minimal-test tests/python/all-platform-minimal-test
-run_pytest cython ${TVM_UNITTEST_TESTSUITE_NAME}-platform-minimal-test tests/python/all-platform-minimal-test
+run_pytest --parallel ctypes ${TVM_UNITTEST_TESTSUITE_NAME}-platform-minimal-test tests/python/all-platform-minimal-test
+run_pytest --parallel cython ${TVM_UNITTEST_TESTSUITE_NAME}-platform-minimal-test tests/python/all-platform-minimal-test
 
 # Then run all unittests on both ctypes and cython.
-run_pytest ctypes ${TVM_UNITTEST_TESTSUITE_NAME} tests/python/unittest
-run_pytest cython ${TVM_UNITTEST_TESTSUITE_NAME} tests/python/unittest
+run_pytest --parallel ctypes ${TVM_UNITTEST_TESTSUITE_NAME} tests/python/unittest
+run_pytest --parallel cython ${TVM_UNITTEST_TESTSUITE_NAME} tests/python/unittest

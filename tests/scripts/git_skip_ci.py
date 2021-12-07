@@ -37,15 +37,6 @@ class GitHubRepo:
             "Authorization": f"Bearer {self.token}",
         }
 
-    def post(self, url: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        url = self.base + url
-        print("Posting", url)
-        data = json.dumps(data).encode()
-        req = request.Request(url, headers=self.headers(), data=data)
-        with request.urlopen(req) as response:
-            response = json.loads(response.read())
-        return response
-
     def get(self, url: str) -> Dict[str, Any]:
         url = self.base + url
         print("Requesting", url)
@@ -53,18 +44,6 @@ class GitHubRepo:
         with request.urlopen(req) as response:
             response = json.loads(response.read())
         return response
-
-    def mark_ci_skipped(self, pr_number: str) -> None:
-        pr = self.get(f"pulls/{pr_number}")
-        current_title = pr["title"]
-        if current_title.startswith("[skip ci]"):
-            print("PR title already starts with '[skip ci]', not doing anything")
-        else:
-            print("Adding '[skip ci]' to PR title")
-            title = f"[skip ci] {current_title}"
-            self.post(f"pulls/{pr_number}", data={"title": title})
-
-        self.post(f"issues/{pr_number}/labels", data={"labels": ["ci-skipped"]})
 
 
 def parse_remote(remote: str) -> Tuple[str, str]:
@@ -85,18 +64,33 @@ def parse_remote(remote: str) -> Tuple[str, str]:
         return m.groups()
 
 
+def git(command):
+    proc = subprocess.run(["git"] + command, stdout=subprocess.PIPE, check=True)
+    return proc.stdout.decode().strip()
+
+
 if __name__ == "__main__":
-    help = "Marks a PR as skipped by adding '[skip ci]' to the PR title and adding a label"
+    help = "Exits with 0 if CI should be skipped, 1 otherwise"
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument("--pr", required=True)
     parser.add_argument("--remote", default="origin", help="ssh remote to parse")
     args = parser.parse_args()
 
-    proc = subprocess.run(
-        ["git", "config", "--get", f"remote.{args.remote}.url"], stdout=subprocess.PIPE, check=True
-    )
-    remote = proc.stdout.decode().strip()
-    user, repo = parse_remote(remote)
+    branch = git(["rev-parse", "--abbrev-ref", "HEAD"])
+    log = git(["log", "--format=%s", "-1"])
 
-    github = GitHubRepo(token=os.environ["TOKEN"], user=user, repo=repo)
-    github.mark_ci_skipped(args.pr)
+    # Check the PR's title (don't check this until everything else passes first)
+    def check_pr_title():
+        remote = git(["config", "--get", f"remote.{args.remote}.url"])
+        user, repo = parse_remote(remote)
+        github = GitHubRepo(token=os.environ["TOKEN"], user=user, repo=repo)
+        pr = github.get(f"pulls/{args.pr}")
+        print("pr title:", pr["title"])
+        return pr["title"].startswith("[skip ci]")
+
+    if args.pr != "null" and branch != "main" and log.startswith("[skip ci]") and check_pr_title():
+        print("Commit and PR start with '[skip ci]', skipping...")
+        exit(0)
+    else:
+        print(f"Not skipping CI:\nargs.pr: {args.pr}\nbranch: {branch}\ncommit: {log}")
+        exit(1)

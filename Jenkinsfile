@@ -117,13 +117,15 @@ def cancel_previous_build() {
   }
 }
 
-def mark_pr_skipped(pr_number) {
-  withCredentials([string(credentialsId: 'temp-jenkins', variable: 'TOKEN')]) {
-    sh (
-      script: "python ./tests/scripts/github_mark_pr_skipped.py ${pr_number}",
-      label: "Add [skip ci] to PR title and ci-skipped label",
+def should_skip_ci(pr_number) {
+  withCredentials([string(credentialsId: 'jenkins-reader-apache', variable: 'TOKEN')]) {
+    run_full_ci = sh (
+      returnStatus: true,
+      script: "./tests/scripts/git_skip_ci.py '${pr_number}'",
+      label: 'Check if CI should be skipped',
     )
   }
+  return !run_full_ci
 }
 
 cancel_previous_build()
@@ -166,14 +168,7 @@ stage('Sanity Check') {
           script: "${docker_run} ${ci_lint}  ./tests/scripts/task_lint.sh",
           label: "Run lint",
         )
-        skip_ci = sh (
-          returnStatus: true,
-          script: "./tests/scripts/git_skip_ci.sh '${env.CHANGE_ID}'",
-          label: 'Check if CI should be skipped',
-        )
-        if (skip_ci == 1) {
-          mark_pr_skipped(env.CHANGE_ID)
-        }
+        skip_ci = should_skip_ci(env.CHANGE_ID)
       }
     }
   }

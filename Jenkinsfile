@@ -147,16 +147,18 @@ stage('Sanity Check') {
   timeout(time: max_time, unit: 'MINUTES') {
     node('CPU') {
       ws(per_exec_ws('tvm/sanity')) {
-        init_git()
-        is_docs_only_build = sh (
-          returnStatus: true,
-          script: './tests/scripts/git_change_docs.sh',
-          label: "Check for docs only changes",
-        )
-        sh (
-          script: "${docker_run} ${ci_lint}  ./tests/scripts/task_lint.sh",
-          label: "Run lint",
-        )
+        hello("sanity check")
+        is_docs_only_build = 0
+        // init_git()
+        // is_docs_only_build = sh (
+        //   returnStatus: true,
+        //   script: './tests/scripts/git_change_docs.sh',
+        //   label: "Check for docs only changes",
+        // )
+        // sh (
+        //   script: "${docker_run} ${ci_lint}  ./tests/scripts/task_lint.sh",
+        //   label: "Run lint",
+        // )
       }
     }
   }
@@ -240,325 +242,445 @@ def cpp_unittest(image) {
   )
 }
 
-stage('Build') {
-    parallel 'BUILD: GPU': {
-      node('GPUBUILD') {
-        ws(per_exec_ws('tvm/build-gpu')) {
-          init_git()
-          sh "${docker_run} ${ci_gpu} ./tests/scripts/task_config_build_gpu.sh"
-          make(ci_gpu, 'build', '-j2')
-          pack_lib('gpu', tvm_multilib)
-          // compiler test
-          sh "${docker_run} ${ci_gpu} ./tests/scripts/task_config_build_gpu_other.sh"
-          make(ci_gpu, 'build2', '-j2')
-      }
-    }
-  },
-  'BUILD: CPU': {
-    if (is_docs_only_build != 1) {
-      node('CPU') {
-        ws(per_exec_ws('tvm/build-cpu')) {
-          init_git()
-          sh (
-            script: "${docker_run} ${ci_cpu} ./tests/scripts/task_config_build_cpu.sh",
-            label: "Create CPU cmake config",
-          )
-          make(ci_cpu, 'build', '-j2')
-          pack_lib('cpu', tvm_multilib_tsim)
-          timeout(time: max_time, unit: 'MINUTES') {
-            ci_setup(ci_cpu)
-            python_unittest(ci_cpu)
-            fsim_test(ci_cpu)
-            sh (
-              script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_vta_tsim.sh",
-              label: "Run VTA tests in TSIM",
-            )
-            // sh "${docker_run} ${ci_cpu} ./tests/scripts/task_golang.sh"
-            // TODO(@jroesch): need to resolve CI issue will turn back on in follow up patch
-            sh (script: "${docker_run} ${ci_cpu} ./tests/scripts/task_rust.sh", label: "Rust build and test")
-            junit "build/pytest-results/*.xml"
-          }
-        }
-      }
-    } else {
-      Utils.markStageSkippedForConditional('BUILD: CPU')
-    }
-  },
-  'BUILD: WASM': {
-    if (is_docs_only_build != 1) {
-      node('CPU') {
-        ws(per_exec_ws('tvm/build-wasm')) {
-          init_git()
-          sh (
-            script: "${docker_run} ${ci_wasm} ./tests/scripts/task_config_build_wasm.sh",
-            label: "Create WASM cmake config",
-          )
-          make(ci_wasm, 'build', '-j2')
-          timeout(time: max_time, unit: 'MINUTES') {
-            ci_setup(ci_wasm)
-            sh (
-              script: "${docker_run} ${ci_wasm} ./tests/scripts/task_web_wasm.sh",
-              label: "Run WASM lint and tests",
-            )
-          }
-        }
-      }
-    } else {
-      Utils.markStageSkippedForConditional('BUILD: WASM')
-    }
-  },
-  'BUILD: i386': {
-    if ( is_docs_only_build != 1) {
-      node('CPU') {
-        ws(per_exec_ws('tvm/build-i386')) {
-          init_git()
-          sh (
-            script: "${docker_run} ${ci_i386} ./tests/scripts/task_config_build_i386.sh",
-            label: "Create i386 cmake config",
-          )
-          make(ci_i386, 'build', '-j2')
-          pack_lib('i386', tvm_multilib_tsim)
-        }
-      }
-    } else {
-      Utils.markStageSkippedForConditional('BUILD: i386')
-    }
-  },
-  'BUILD: arm': {
-    if (is_docs_only_build != 1) {
-      node('ARM') {
-        ws(per_exec_ws('tvm/build-arm')) {
-          init_git()
-          sh (
-            script: "${docker_run} ${ci_arm} ./tests/scripts/task_config_build_arm.sh",
-            label: "Create ARM cmake config",
-          )
-          make(ci_arm, 'build', '-j4')
-          pack_lib('arm', tvm_multilib)
-        }
-      }
-     } else {
-      Utils.markStageSkippedForConditional('BUILD: arm')
-    }
-  },
-  'BUILD: QEMU': {
-    if (is_docs_only_build != 1) {
-      node('CPU') {
-        ws(per_exec_ws('tvm/build-qemu')) {
-          init_git()
-          sh (
-            script: "${docker_run} ${ci_qemu} ./tests/scripts/task_config_build_qemu.sh",
-            label: "Create QEMU cmake config",
-          )
-          make(ci_qemu, 'build', '-j2')
-          timeout(time: max_time, unit: 'MINUTES') {
-            ci_setup(ci_qemu)
-            sh (
-              script: "${docker_run} ${ci_qemu} ./tests/scripts/task_python_microtvm.sh",
-              label: "Run microTVM tests",
-            )
-            junit "build/pytest-results/*.xml"
-          }
-        }
-      }
-     } else {
-      Utils.markStageSkippedForConditional('BUILD: QEMU')
-    }
-  }
+def hello(to) {
+  sh (
+    script: "echo hello '${to}'",
+    label: "Say hello to ${to}",
+  )
 }
 
-stage('Unit Test') {
-    parallel 'python3: GPU': {
-      if (is_docs_only_build != 1) {
-        node('TensorCore') {
-          ws(per_exec_ws('tvm/ut-python-gpu')) {
-            init_git()
-            unpack_lib('gpu', tvm_multilib)
-            timeout(time: max_time, unit: 'MINUTES') {
-              ci_setup(ci_gpu)
-              sh (
-                script: "${docker_run} ${ci_gpu} ./tests/scripts/task_sphinx_precheck.sh",
-                label: "Check Sphinx warnings in docs",
-              )
-              sh (
-                script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_unittest_gpuonly.sh",
-                label: "Run Python GPU unit tests",
-              )
-              sh (
-                script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_integration_gpuonly.sh",
-                label: "Run Python GPU integration tests",
-              )
-              junit "build/pytest-results/*.xml"
-            }
-          }
-        }
-      } else {
-        Utils.markStageSkippedForConditional('python3: GPU')
-      }
-    },
-    'python3: CPU': {
-      if (is_docs_only_build != 1) {
-        node('CPU') {
-          ws(per_exec_ws("tvm/ut-python-cpu")) {
-            init_git()
-            unpack_lib('cpu', tvm_multilib_tsim)
-            timeout(time: max_time, unit: 'MINUTES') {
-              ci_setup(ci_cpu)
-              sh (
-                script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_integration.sh",
-                label: "Run CPU integration tests",
-              )
-              junit "build/pytest-results/*.xml"
-            }
-          }
-        }
-      } else {
-        Utils.markStageSkippedForConditional('python3: CPU')
-      }
-    },
-    'python3: i386': {
-      if (is_docs_only_build != 1) {
-        node('CPU') {
-          ws(per_exec_ws('tvm/ut-python-i386')) {
-            init_git()
-            unpack_lib('i386', tvm_multilib)
-            timeout(time: max_time, unit: 'MINUTES') {
-              ci_setup(ci_i386)
-              python_unittest(ci_i386)
-              sh (
-                script: "${docker_run} ${ci_i386} ./tests/scripts/task_python_integration_i386only.sh",
-                label: "Run i386 integration tests",
-              )
-              fsim_test(ci_i386)
-              junit "build/pytest-results/*.xml"
-            }
-          }
-        }
-     } else {
-        Utils.markStageSkippedForConditional('python3: i386')
-      }
-    },
-    'python3: arm': {
-      if (is_docs_only_build != 1) {
-        node('ARM') {
-          ws(per_exec_ws('tvm/ut-python-arm')) {
-            init_git()
-            unpack_lib('arm', tvm_multilib)
-            timeout(time: max_time, unit: 'MINUTES') {
-              ci_setup(ci_arm)
-              python_unittest(ci_arm)
-              sh (
-                script: "${docker_run} ${ci_arm} ./tests/scripts/task_python_arm_compute_library.sh",
-                label: "Run test_arm_compute_lib test",
-              )
-              junit "build/pytest-results/*.xml"
-            // sh "${docker_run} ${ci_arm} ./tests/scripts/task_python_integration.sh"
-            }
-          }
-        }
-      } else {
-         Utils.markStageSkippedForConditional('python3: arm')
-      }
-    },
-    'java: GPU': {
-      if (is_docs_only_build != 1 ) {
-        node('GPU') {
-          ws(per_exec_ws('tvm/ut-java')) {
-            init_git()
-              unpack_lib('gpu', tvm_multilib)
-              timeout(time: max_time, unit: 'MINUTES') {
-                ci_setup(ci_gpu)
-                sh (
-                  script: "${docker_run} ${ci_gpu} ./tests/scripts/task_java_unittest.sh",
-                  label: "Run Java unit tests",
-                )
-              }
-          }
-        }
-      } else {
-         Utils.markStageSkippedForConditional('java: GPU')
+def buildAndTestStage = [:]
+
+
+buildAndTestStage["CPU"] = {
+  stage("Build") {
+    node('CPU') {
+      ws(per_exec_ws('tvm/build-cpu')) {
+        hello("CPU build")
       }
     }
+  }
+  def cpuTestStages = [:]
+  cpuTestStages["Unit Test"] = {
+    node('CPU') {
+      ws(per_exec_ws('tvm/ut-python-cpu')) {
+        hello("CPU test 1")
+      }
+    }
+  }
+  cpuTestStages["Integration Test"] = {
+    node('CPU') {
+      ws(per_exec_ws('tvm/ut-python-cpu')) {
+        hello("CPU test 2")
+      }
+    }
+  }
+
+  stage("Test") {
+    parallel(cpuTestStages)
+  }
+  // stage("Test") {
+  //   node('CPU') {
+  //     ws(per_exec_ws('tvm/ut-python-cpu')) {
+  //       hello("CPU test")
+  //     }
+  //   }
+  // }
 }
 
-stage('Integration Test') {
-  parallel 'topi: GPU': {
-  if (is_docs_only_build != 1) {
-    node('GPU') {
-      ws(per_exec_ws('tvm/topi-python-gpu')) {
-        init_git()
-        unpack_lib('gpu', tvm_multilib)
-        timeout(time: max_time, unit: 'MINUTES') {
-          ci_setup(ci_gpu)
-          sh (
-            script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_topi.sh",
-            label: "Run TOPI tests",
-          )
-          junit "build/pytest-results/*.xml"
-        }
+buildAndTestStage["GPU"] = {
+  stage("Build") {
+    node('GPUBUILD') {
+      ws(per_exec_ws('tvm/build-gpu')) {
+        hello("CPU build")
       }
     }
-    } else {
-      Utils.markStageSkippedForConditional('topi: GPU')
   }
-  },
-  'frontend: GPU': {
-    if (is_docs_only_build != 1) {
-      node('GPU') {
-        ws(per_exec_ws('tvm/frontend-python-gpu')) {
-          init_git()
-          unpack_lib('gpu', tvm_multilib)
-          timeout(time: max_time, unit: 'MINUTES') {
-            ci_setup(ci_gpu)
-            sh (
-              script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_frontend.sh",
-              label: "Run Python frontend tests",
-            )
-            junit "build/pytest-results/*.xml"
-          }
-        }
-      }
-     } else {
-      Utils.markStageSkippedForConditional('frontend: GPU')
-    }
-  },
-  'frontend: CPU': {
-    if (is_docs_only_build != 1) {
-      node('CPU') {
-        ws(per_exec_ws('tvm/frontend-python-cpu')) {
-          init_git()
-          unpack_lib('cpu', tvm_multilib)
-          timeout(time: max_time, unit: 'MINUTES') {
-            ci_setup(ci_cpu)
-            sh (
-              script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_frontend_cpu.sh",
-              label: "Run Python frontend tests",
-            )
-            junit "build/pytest-results/*.xml"
-          }
-        }
-      }
-    } else {
-      Utils.markStageSkippedForConditional('frontend: CPU')
-    }
-  },
-  'docs: GPU': {
+  stage("Test") {
     node('TensorCore') {
-      ws(per_exec_ws('tvm/docs-python-gpu')) {
-        init_git()
-        unpack_lib('gpu', tvm_multilib)
-        timeout(time: max_time, unit: 'MINUTES') {
-          ci_setup(ci_gpu)
-          sh (
-            script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_docs.sh",
-            label: "Build docs",
-          )
-        }
-        pack_lib('mydocs', 'docs.tgz')
+      ws(per_exec_ws('tvm/ut-python-gpu')) {
+        hello("CPU test")
       }
     }
   }
 }
+
+stage("Build and Test") {
+  parallel(buildAndTestStage)
+}
+
+// stage('Build and Test') {
+//     parallel 'BUILD: GPU': {
+//       node('GPUBUILD') {
+//         ws(per_exec_ws('tvm/build-gpu')) {
+//           hello("gpu build")
+//           // init_git()
+//           // sh "${docker_run} ${ci_gpu} ./tests/scripts/task_config_build_gpu.sh"
+//           // make(ci_gpu, 'build', '-j2')
+//           // pack_lib('gpu', tvm_multilib)
+//           // // compiler test
+//           // sh "${docker_run} ${ci_gpu} ./tests/scripts/task_config_build_gpu_other.sh"
+//           // make(ci_gpu, 'build2', '-j2')
+//       }
+//     }
+//   },
+//   'BUILD: CPU': {
+//     stage("Build: CPU") {
+//       if (is_docs_only_build != 1) {
+//         node('CPU') {
+//           ws(per_exec_ws('tvm/build-cpu')) {
+//             hello("cpu build")
+//             // init_git()
+//             // sh (
+//             //   script: "${docker_run} ${ci_cpu} ./tests/scripts/task_config_build_cpu.sh",
+//             //   label: "Create CPU cmake config",
+//             // )
+//             // make(ci_cpu, 'build', '-j2')
+//             // pack_lib('cpu', tvm_multilib_tsim)
+//             // timeout(time: max_time, unit: 'MINUTES') {
+//             //   ci_setup(ci_cpu)
+//             //   python_unittest(ci_cpu)
+//             //   fsim_test(ci_cpu)
+//             //   sh (
+//             //     script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_vta_tsim.sh",
+//             //     label: "Run VTA tests in TSIM",
+//             //   )
+//             //   // sh "${docker_run} ${ci_cpu} ./tests/scripts/task_golang.sh"
+//             //   // TODO(@jroesch): need to resolve CI issue will turn back on in follow up patch
+//             //   sh (script: "${docker_run} ${ci_cpu} ./tests/scripts/task_rust.sh", label: "Rust build and test")
+//             //   junit "build/pytest-results/*.xml"
+//             // }
+//           }
+//         }
+//       } else {
+//         Utils.markStageSkippedForConditional('BUILD: CPU')
+//       }
+//     }
+//     stage("Test: CPU") {
+//       parallel 'cpu Unit test': {
+//         node('CPU') {
+//           ws(per_exec_ws("tvm/ut-python-cpu")) {
+//             hello("cpu unit test")
+//             // init_git()
+
+//             // unpack_lib('cpu', tvm_multilib_tsim)
+//             // timeout(time: max_time, unit: 'MINUTES') {
+//             //   ci_setup(ci_cpu)
+//             //   sh (
+//             //     script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_integration.sh",
+//             //     label: "Run CPU integration tests",
+//             //   )
+//             //   junit "build/pytest-results/*.xml"
+//             // }
+//           }
+//         }
+//       }, "cpu Integration test": {
+//       node('CPU') {
+//         ws(per_exec_ws('tvm/frontend-python-cpu')) {
+//           hello("cpu integration")
+//           // init_git()
+//           // unpack_lib('cpu', tvm_multilib)
+//           // timeout(time: max_time, unit: 'MINUTES') {
+//           //   ci_setup(ci_cpu)
+//           //   sh (
+//           //     script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_frontend_cpu.sh",
+//           //     label: "Run Python frontend tests",
+//           //   )
+//           //   junit "build/pytest-results/*.xml"
+//           // }
+//         }
+//       }
+//       }
+//     }
+//   },
+//   // 'BUILD: WASM': {
+//   //   if (is_docs_only_build != 1) {
+//   //     node('CPU') {
+//   //       ws(per_exec_ws('tvm/build-wasm')) {
+//   //         hello("wasm")
+//   //         // init_git()
+//   //         // sh (
+//   //         //   script: "${docker_run} ${ci_wasm} ./tests/scripts/task_config_build_wasm.sh",
+//   //         //   label: "Create WASM cmake config",
+//   //         // )
+//   //         // make(ci_wasm, 'build', '-j2')
+//   //         // timeout(time: max_time, unit: 'MINUTES') {
+//   //         //   ci_setup(ci_wasm)
+//   //         //   sh (
+//   //         //     script: "${docker_run} ${ci_wasm} ./tests/scripts/task_web_wasm.sh",
+//   //         //     label: "Run WASM lint and tests",
+//   //         //   )
+//   //         // }
+//   //       }
+//   //     }
+//   //   } else {
+//   //     Utils.markStageSkippedForConditional('BUILD: WASM')
+//   //   }
+//   // },
+//   // 'BUILD: i386': {
+//   //   if ( is_docs_only_build != 1) {
+//   //     node('CPU') {
+//   //       ws(per_exec_ws('tvm/build-i386')) {
+//   //         hello("i386")
+//   //         // init_git()
+//   //         // sh (
+//   //         //   script: "${docker_run} ${ci_i386} ./tests/scripts/task_config_build_i386.sh",
+//   //         //   label: "Create i386 cmake config",
+//   //         // )
+//   //         // make(ci_i386, 'build', '-j2')
+//   //         // pack_lib('i386', tvm_multilib_tsim)
+//   //       }
+//   //     }
+//   //   } else {
+//   //     Utils.markStageSkippedForConditional('BUILD: i386')
+//   //   }
+//   // },
+//   // 'BUILD: arm': {
+//   //   if (is_docs_only_build != 1) {
+//   //     node('ARM') {
+//   //       ws(per_exec_ws('tvm/build-arm')) {
+//   //         hello("arm")
+//   //         // init_git()
+//   //         // sh (
+//   //         //   script: "${docker_run} ${ci_arm} ./tests/scripts/task_config_build_arm.sh",
+//   //         //   label: "Create ARM cmake config",
+//   //         // )
+//   //         // make(ci_arm, 'build', '-j4')
+//   //         // pack_lib('arm', tvm_multilib)
+//   //       }
+//   //     }
+//   //    } else {
+//   //     Utils.markStageSkippedForConditional('BUILD: arm')
+//   //   }
+//   // },
+//   // 'BUILD: QEMU': {
+//   //   if (is_docs_only_build != 1) {
+//   //     node('CPU') {
+//   //       ws(per_exec_ws('tvm/build-qemu')) {
+//   //         hello("build qemu")
+//   //         // init_git()
+//   //         // sh (
+//   //         //   script: "${docker_run} ${ci_qemu} ./tests/scripts/task_config_build_qemu.sh",
+//   //         //   label: "Create QEMU cmake config",
+//   //         // )
+//   //         // make(ci_qemu, 'build', '-j2')
+//   //         // timeout(time: max_time, unit: 'MINUTES') {
+//   //         //   ci_setup(ci_qemu)
+//   //         //   sh (
+//   //         //     script: "${docker_run} ${ci_qemu} ./tests/scripts/task_python_microtvm.sh",
+//   //         //     label: "Run microTVM tests",
+//   //         //   )
+//   //         //   junit "build/pytest-results/*.xml"
+//   //         // }
+//   //       }
+//   //     }
+//   //    } else {
+//   //     Utils.markStageSkippedForConditional('BUILD: QEMU')
+//   //   }
+//   // }
+// }
+
+// stage('Unit Test') {
+//     parallel 'python3: GPU': {
+//       if (is_docs_only_build != 1) {
+//         node('TensorCore') {
+//           ws(per_exec_ws('tvm/ut-python-gpu')) {
+//             hello("python3 tensorcore unit test")
+//             // init_git()
+//             // unpack_lib('gpu', tvm_multilib)
+//             // timeout(time: max_time, unit: 'MINUTES') {
+//             //   ci_setup(ci_gpu)
+//             //   sh (
+//             //     script: "${docker_run} ${ci_gpu} ./tests/scripts/task_sphinx_precheck.sh",
+//             //     label: "Check Sphinx warnings in docs",
+//             //   )
+//             //   sh (
+//             //     script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_unittest_gpuonly.sh",
+//             //     label: "Run Python GPU unit tests",
+//             //   )
+//             //   sh (
+//             //     script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_integration_gpuonly.sh",
+//             //     label: "Run Python GPU integration tests",
+//             //   )
+//             //   junit "build/pytest-results/*.xml"
+//             // }
+//           }
+//         }
+//       } else {
+//         Utils.markStageSkippedForConditional('python3: GPU')
+//       }
+//     },
+//     'python3: CPU': {
+//       if (is_docs_only_build != 1) {
+//         node('CPU') {
+//           ws(per_exec_ws("tvm/ut-python-cpu")) {
+//             hello("python3 cpu unit test")
+//             // init_git()
+//             // unpack_lib('cpu', tvm_multilib_tsim)
+//             // timeout(time: max_time, unit: 'MINUTES') {
+//             //   ci_setup(ci_cpu)
+//             //   sh (
+//             //     script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_integration.sh",
+//             //     label: "Run CPU integration tests",
+//             //   )
+//             //   junit "build/pytest-results/*.xml"
+//             // }
+//           }
+//         }
+//       } else {
+//         Utils.markStageSkippedForConditional('python3: CPU')
+//       }
+//     },
+//     'python3: i386': {
+//       if (is_docs_only_build != 1) {
+//         node('CPU') {
+//           ws(per_exec_ws('tvm/ut-python-i386')) {
+//             hello("i386 python")
+//             // init_git()
+//             // unpack_lib('i386', tvm_multilib)
+//             // timeout(time: max_time, unit: 'MINUTES') {
+//             //   ci_setup(ci_i386)
+//             //   python_unittest(ci_i386)
+//             //   sh (
+//             //     script: "${docker_run} ${ci_i386} ./tests/scripts/task_python_integration_i386only.sh",
+//             //     label: "Run i386 integration tests",
+//             //   )
+//             //   fsim_test(ci_i386)
+//             //   junit "build/pytest-results/*.xml"
+//             // }
+//           }
+//         }
+//      } else {
+//         Utils.markStageSkippedForConditional('python3: i386')
+//       }
+//     },
+//     'python3: arm': {
+//       if (is_docs_only_build != 1) {
+//         node('ARM') {
+//           ws(per_exec_ws('tvm/ut-python-arm')) {
+//             hello("python3 arm")
+//             // init_git()
+//             // unpack_lib('arm', tvm_multilib)
+//             // timeout(time: max_time, unit: 'MINUTES') {
+//             //   ci_setup(ci_arm)
+//             //   python_unittest(ci_arm)
+//             //   sh (
+//             //     script: "${docker_run} ${ci_arm} ./tests/scripts/task_python_arm_compute_library.sh",
+//             //     label: "Run test_arm_compute_lib test",
+//             //   )
+//             //   junit "build/pytest-results/*.xml"
+//             // // sh "${docker_run} ${ci_arm} ./tests/scripts/task_python_integration.sh"
+//             // }
+//           }
+//         }
+//       } else {
+//          Utils.markStageSkippedForConditional('python3: arm')
+//       }
+//     },
+//     'java: GPU': {
+//       if (is_docs_only_build != 1 ) {
+//         node('GPU') {
+//           ws(per_exec_ws('tvm/ut-java')) {
+//             hello("java gpu")
+//             // init_git()
+//             // unpack_lib('gpu', tvm_multilib)
+//             // timeout(time: max_time, unit: 'MINUTES') {
+//             //   ci_setup(ci_gpu)
+//             //   sh (
+//             //     script: "${docker_run} ${ci_gpu} ./tests/scripts/task_java_unittest.sh",
+//             //     label: "Run Java unit tests",
+//             //   )
+//             // }
+//           }
+//         }
+//       } else {
+//          Utils.markStageSkippedForConditional('java: GPU')
+//       }
+//     }
+// }
+
+// stage('Integration Test') {
+//   parallel 'topi: GPU': {
+//   if (is_docs_only_build != 1) {
+//     node('GPU') {
+//       ws(per_exec_ws('tvm/topi-python-gpu')) {
+//         hello("topi gpu")
+//         // init_git()
+//         // unpack_lib('gpu', tvm_multilib)
+//         // timeout(time: max_time, unit: 'MINUTES') {
+//         //   ci_setup(ci_gpu)
+//         //   sh (
+//         //     script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_topi.sh",
+//         //     label: "Run TOPI tests",
+//         //   )
+//         //   junit "build/pytest-results/*.xml"
+//         // }
+//       }
+//     }
+//     } else {
+//       Utils.markStageSkippedForConditional('topi: GPU')
+//   }
+//   },
+//   'frontend: GPU': {
+//     if (is_docs_only_build != 1) {
+//       node('GPU') {
+//         ws(per_exec_ws('tvm/frontend-python-gpu')) {
+//           hello("frontend gpu")
+//           // init_git()
+//           // unpack_lib('gpu', tvm_multilib)
+//           // timeout(time: max_time, unit: 'MINUTES') {
+//           //   ci_setup(ci_gpu)
+//           //   sh (
+//           //     script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_frontend.sh",
+//           //     label: "Run Python frontend tests",
+//           //   )
+//           //   junit "build/pytest-results/*.xml"
+//           // }
+//         }
+//       }
+//      } else {
+//       Utils.markStageSkippedForConditional('frontend: GPU')
+//     }
+//   },
+//   'frontend: CPU': {
+//     if (is_docs_only_build != 1) {
+//       node('CPU') {
+//         ws(per_exec_ws('tvm/frontend-python-cpu')) {
+//           hello("frontend cpu")
+//           // init_git()
+//           // unpack_lib('cpu', tvm_multilib)
+//           // timeout(time: max_time, unit: 'MINUTES') {
+//           //   ci_setup(ci_cpu)
+//           //   sh (
+//           //     script: "${docker_run} ${ci_cpu} ./tests/scripts/task_python_frontend_cpu.sh",
+//           //     label: "Run Python frontend tests",
+//           //   )
+//           //   junit "build/pytest-results/*.xml"
+//           // }
+//         }
+//       }
+//     } else {
+//       Utils.markStageSkippedForConditional('frontend: CPU')
+//     }
+//   },
+//   'docs: GPU': {
+//     node('TensorCore') {
+//       ws(per_exec_ws('tvm/docs-python-gpu')) {
+//         hello("docs gpu")
+//         // init_git()
+//         // unpack_lib('gpu', tvm_multilib)
+//         // timeout(time: max_time, unit: 'MINUTES') {
+//         //   ci_setup(ci_gpu)
+//         //   sh (
+//         //     script: "${docker_run} ${ci_gpu} ./tests/scripts/task_python_docs.sh",
+//         //     label: "Build docs",
+//         //   )
+//         // }
+//         // pack_lib('mydocs', 'docs.tgz')
+//       }
+//     }
+//   }
+// }
 
 /*
 stage('Build packages') {

@@ -52,4 +52,4 @@ We learned a lot from the following projects when building TVM.
 - [Loopy](https://github.com/inducer/loopy): use of integer set analysis and its loop transformation primitives.
 - [Theano](https://github.com/Theano/Theano): the design inspiration of symbolic scan operator for recurrence.
 
-wow
+Wow

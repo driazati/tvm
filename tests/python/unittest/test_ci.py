@@ -37,7 +37,7 @@ def test_skip_ci():
             if proc.returncode != 0:
                 raise RuntimeError(f"git command failed: '{args}'")
 
-    def test(commands, should_skip, why):
+    def test(commands, should_skip, pr_title, why):
         with tempfile.TemporaryDirectory() as dir:
             git = TempGit(dir)
             # Jenkins git is too old and doesn't have 'git init --initial-branch'
@@ -51,7 +51,7 @@ def test_skip_ci():
                 git.run(*command)
             pr_number = "1234"
             proc = subprocess.run(
-                [str(skip_ci_script), "--pr", pr_number, "--pr-title", "[skip ci] test"], cwd=dir
+                [str(skip_ci_script), "--pr", pr_number, "--pr-title", pr_title], cwd=dir
             )
             expected = 0 if should_skip else 1
             assert proc.returncode == expected, why
@@ -59,6 +59,7 @@ def test_skip_ci():
     test(
         commands=[],
         should_skip=False,
+        pr_title="[skip ci] test",
         why="ci should not be skipped",
     )
 
@@ -67,6 +68,7 @@ def test_skip_ci():
             ["commit", "--allow-empty", "--message", "[skip ci] commit 1"],
         ],
         should_skip=False,
+        pr_title="[skip ci] test",
         why="ci should not be skipped on main",
     )
 
@@ -76,7 +78,18 @@ def test_skip_ci():
             ["commit", "--allow-empty", "--message", "[skip ci] commit 1"],
         ],
         should_skip=True,
+        pr_title="[skip ci] test",
         why="ci should be skipped on a branch with [skip ci] in the last commit",
+    )
+
+    test(
+        commands=[
+            ["checkout", "-b", "some_new_branch"],
+            ["commit", "--allow-empty", "--message", "[skip ci] commit 1"],
+        ],
+        should_skip=False,
+        pr_title="[no skip ci] test",
+        why="ci should not be skipped on a branch with [skip ci] in the last commit but not the PR title",
     )
 
     test(
@@ -86,6 +99,7 @@ def test_skip_ci():
             ["commit", "--allow-empty", "--message", "commit 2"],
         ],
         should_skip=False,
+        pr_title="[skip ci] test",
         why="ci should not be skipped on a branch without [skip ci] in the last commit",
     )
 
@@ -96,6 +110,7 @@ def test_skip_ci():
             ["commit", "--allow-empty", "--message", "commit 2"],
         ],
         should_skip=False,
+        pr_title="[skip ci] test",
         why="ci should not be skipped on a branch without [skip ci] in the last commit",
     )
 
@@ -108,6 +123,7 @@ def test_skip_ci():
             ["commit", "--allow-empty", "--message", "commit 4"],
         ],
         should_skip=False,
+        pr_title="[skip ci] test",
         why="ci should not be skipped on a branch without [skip ci] in the last commit",
     )
 

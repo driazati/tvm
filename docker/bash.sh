@@ -454,5 +454,6 @@ DOCKER_CMD=(${DOCKER_BINARY} run
 if ${DRY_RUN}; then
     echo ${DOCKER_CMD[@]+"${DOCKER_CMD[@]}"}
 else
+    echo ${DOCKER_CMD[@]+"${DOCKER_CMD[@]}"}
     ${DOCKER_CMD[@]+"${DOCKER_CMD[@]}"}
 fi

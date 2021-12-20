@@ -261,6 +261,60 @@ def lint() -> None:
     )
 
 
+def gpu_test(
+    regex: Optional[str] = None,
+    sphinx: bool = False,
+    java: bool = False,
+    unit: bool = False,
+    integration: bool = False,
+) -> None:
+    """
+    Run a GPU test
+
+    arguments:
+    regex -- test regex filter (see pytest's -k parameter)
+    sphinx -- run sphinx pre-check
+    java -- run java unit tests
+    unit -- run GPU unit tests
+    integration -- run GPU integration tests
+    """
+    check_build()
+
+    scripts = [
+        "./tests/scripts/task_config_build_gpu.sh",
+        f"./tests/scripts/task_build.sh build -j{NPROC}",
+        "./tests/scripts/task_ci_setup.sh",
+    ]
+    env = {}
+
+    if sphinx:
+        scripts.append("./tests/scripts/task_sphinx_precheck.sh")
+    if java:
+        scripts.append("./tests/scripts/task_java_unittest.sh")
+
+    if regex:
+        if unit or integration:
+            clean_exit("--regex cannot be used with --unit or --integration")
+
+        env["PYTEST_ADDOPTS"] = "-m gpu"
+        env["TVM_TEST_TARGETS"] = "cuda;opencl;metal;rocm;nvptx;opencl -device=mali,aocl_sw_emu"
+        env["TVM_UNITTEST_TESTSUITE_NAME"] = "python-unittest-gpu"
+        scripts.append("pytest -k wowomeow")
+    else:
+        if unit:
+            scripts.append("./tests/scripts/task_python_unittest_gpuonly.sh")
+        if integration:
+            scripts.append("./tests/scripts/task_python_integration_gpuonly.sh")
+
+    docker(
+        name="ci-gpu-test",
+        image="ci_gpu",
+        scripts=scripts,
+        env=env,
+    )
+    print("testing", regex)
+
+
 def cli_name(s: str) -> str:
     return s.replace("_", "-")
 
@@ -312,7 +366,9 @@ def main():
     parser = argparse.ArgumentParser(description="Run CI scripts locally via Docker")
     subparsers = parser.add_subparsers(dest="command")
 
-    subparser_functions = {cli_name(func.__name__): func for func in [docs, serve_docs, lint]}
+    subparser_functions = {
+        cli_name(func.__name__): func for func in [docs, serve_docs, lint, gpu_test]
+    }
     for func in subparser_functions.values():
         add_subparser(func, subparsers)
 

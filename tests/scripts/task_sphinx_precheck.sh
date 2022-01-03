@@ -19,6 +19,7 @@
 # Precheck if sphinx docs build can fail.
 set -e
 set -u
+set -x
 set -o pipefail
 
 cleanup()
@@ -26,6 +27,29 @@ cleanup()
     rm -rf /tmp/$$.*
 }
 trap cleanup 0
+
+export PATH=/opt/miniconda3/bin:$PATH
+
+# TODO: Move these to the docker image
+pip install autodocsumm==0.2.7
+pip install docutils==0.17.1
+pip install Image==1.5.33
+pip install matplotlib==3.5.0
+pip install Pillow==8.4.0
+pip install recommonmark==0.7.1
+pip install sphinx_rtd_theme==1.0.0
+pip install sphinx-gallery==0.10.1
+pip install sphinx==4.3.0
+pip install tlcpack-sphinx-addon==0.2.1
+pip install pytest==6.2.5
+pip install attrs
+pip install cloudpickle
+pip install decorator
+pip install numpy
+pip install psutil
+pip install scipy
+pip install synr
+pip install tornado
 
 # cleanup cache
 rm -rf docs/_staging

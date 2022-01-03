@@ -27,7 +27,9 @@ set -o pipefail
 # packages will have precedence over the system packages.
 #
 # command: python3 -m pip install --user <package>==<version>
-#
+
+export PATH=/opt/miniconda3/bin:$PATH
+
 echo "Additional setup in ${CI_IMAGE_NAME}"
 
 python3 -m pip install --user tlcpack-sphinx-addon==0.2.1 synr==0.6.0

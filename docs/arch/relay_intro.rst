@@ -19,11 +19,11 @@
 
 Introduction to Relay IR
 ========================
-This article introduces Relay IR -- the second generation of NNVM.
+This article introduces Relay IR -- the second generation of `NNVM <https://github.com/dmlc/nnvm/blob/master/docs/dev/overview.md#nnvm-design-overview>`_.
 We expect readers from two kinds of background -- those who have a programming language background and deep learning
 framework developers who are familiar with the computational graph representation.
 
-We briefly summarize the design goal here, and will touch upon these points in the later part of the article.
+We briefly summarize the design goals here, and will touch upon these points in the later part of the article.
 
 - Support traditional data flow-style programming and transformations.
 - Support functional-style scoping, let-binding and making it a fully featured differentiable language.
@@ -48,13 +48,13 @@ computational graph IR like NNVMv1, with the only difference in terms of termino
 - Existing frameworks usually use graph and subgraph
 - Relay uses function e.g. --  ``fn (%x)``, to indicate the graph
 
-Each dataflow node is a CallNode in Relay. The Relay Python DSL allows you to construct a dataflow graph quickly.
-One thing we want to highlight in the above code -- is that we explicitly constructed an Add node with
-both input point to ``%1``.  When a deep learning framework evaluates the above program, it will compute
+Each dataflow node is a :class:`tvm.relay.expr.Call` in Relay. The Relay Python DSL allows you to construct a dataflow graph quickly.
+One thing we want to highlight in the above code is that we explicitly constructed an ``Add`` node with
+both inputs pointing to ``%1``.  When a deep learning framework evaluates the above program, it will compute
 the nodes in topological order, and ``%1`` will only be computed once.
 While this fact is very natural to deep learning framework builders, it is something that might
 surprise a PL researcher in the first place.  If we implement a simple visitor to print out the result and
-treat the result as nested Call expression, it becomes ``log(%x) + log(%x)``.
+treat the result as nested :class:`Call <tvm.relay.expr.Call>` expression, it becomes ``log(%x) + log(%x)``.
 
 Such ambiguity is caused by different interpretations of program semantics when there is a shared node in the DAG.
 In a normal functional programming IR, nested expressions are treated as expression trees, without considering the
@@ -62,8 +62,8 @@ fact that the ``%1`` is actually reused twice in ``%2``.
 
 The Relay IR is mindful of this difference. Usually, deep learning framework users build the computational
 graph in this fashion, where a DAG node reuse often occurs. As a result, when we print out the Relay program in
-the text format, we print one CallNode per line and assign a temporary id ``(%1, %2)`` to each CallNode so each common
-node can be referenced in later parts of the program.
+the text format, we print one :class:`Call <tvm.relay.expr.Call>` per line and assign a temporary id ``(%1, %2)``
+to each :class:`Call <tvm.relay.expr.Call>` so each common node can be referenced in later parts of the program.
 
 Module: Support Multiple Functions (Graphs)
 -------------------------------------------
@@ -84,12 +84,12 @@ shows an example of a function calling another function.
      %2
    }
 
-The Module can be viewed as a ``Map<GlobalVar, Function>``. Here GlobalVar is just an id that is used to represent the functions
-in the module. ``@muladd`` and ``@myfunc`` are GlobalVars in the above example. When a CallNode is used to call another function,
-the corresponding GlobalVar is stored in the op field of the CallNode. It contains a level of indirection -- we need to look up
-body of the called function from the module using the corresponding GlobalVar. In this particular case, we could also directly
-store the reference to the Function as op in the CallNode. So, why do we need to introduce GlobalVar? The main reason is that
-GlobalVar decouples the definition/declaration and enables recursion and delayed declaration of the function.
+The Module can be viewed as a ``Map<GlobalVar, Function>``. Here :class:`GlobalVar <tvm.relay.GlobalVar>` is just an ID that is used to represent the functions
+in the module. ``@muladd`` and ``@myfunc`` are :class:`GlobalVar <tvm.relay.GlobalVar>`s in the above example. When a :class:`Call <tvm.relay.expr.Call>` is used to call another function,
+the corresponding :class:`GlobalVar <tvm.relay.GlobalVar>` is stored in the op field of the :class:`Call <tvm.relay.expr.Call>`. It contains a level of indirection -- we need to look up
+body of the called function from the module using the corresponding :class:`GlobalVar <tvm.relay.GlobalVar>`. In this particular case, we could also directly
+store the reference to the Function as op in the :class:`Call <tvm.relay.expr.Call>`. So, why do we need to introduce :class:`GlobalVar <tvm.relay.GlobalVar>`? The main reason is that
+:class:`GlobalVar <tvm.relay.GlobalVar>` decouples the definition/declaration and enables recursion and delayed declaration of the function.
 
 .. code ::
 
@@ -105,7 +105,7 @@ GlobalVar decouples the definition/declaration and enables recursion and delayed
     }
   }
 
-In the above example, ``@myfunc`` recursively calls itself. Using GlobalVar ``@myfunc`` to represent the function avoids
+In the above example, ``@myfunc`` recursively calls itself. Using :class:`GlobalVar <tvm.relay.GlobalVar>` ``@myfunc`` to represent the function avoids
 the cyclic dependency in the data structure.
 At this point, we have introduced the basic concepts in Relay. Notably, Relay has the following improvements over NNVMv1:
 
@@ -120,9 +120,9 @@ Let Binding and Scopes
 So far, we have introduced how to build a computational graph in the good old way used in deep learning frameworks.
 This section will talk about a new important construct introduced by Relay -- let bindings.
 
-Let binding is used in every high-level programming language. In Relay, it is a data structure with three
-fields ``Let(var, value, body)``. When we evaluate a let expression, we first evaluate the value part, assign
-it to the var, then return the evaluated result in the body expression.
+`Let binding <https://en.wikipedia.org/wiki/Let_expression>`_ is used in many high-level programming languages. In Relay, it is a data structure with three
+fields ``Let(var, value, body)``. When we evaluate a let expression, we first evaluate the ``value`` part, assign
+it to the ``var``, then return the evaluated result in the ``body`` expression.
 
 You can use a sequence of let bindings to construct a logically equivalent program to a dataflow program.
 The code example below shows one program with two forms side by side.
@@ -131,7 +131,7 @@ The code example below shows one program with two forms side by side.
     :align: center
 
 
-The nested let binding is called A-normal form, and it is commonly used as IRs in functional programming languages.
+The nested let binding is called `A-normal form <https://en.wikipedia.org/wiki/A-normal_form>`_, and it is commonly used as IRs in functional programming languages.
 Now, please take a close look at the AST structure. While the two programs are semantically identical
 (so are their textual representations, except that A-normal form has let prefix), their AST structures are different.
 
@@ -155,11 +155,11 @@ which does not use let bindings.
     :align: center
 
 The problem comes when we try to decide where we should evaluate node ``%1``. In particular, while the text format seems
-to suggest that we should evaluate node ``%1`` outside the if scope, the AST(as shown in the picture) does not suggest so.
+to suggest that we should evaluate node ``%1`` outside the if scope, the AST (as shown in the picture) does not suggest so.
 Actually, a dataflow graph never defines its scope of the evaluation. This introduces some ambiguity in the semantics.
 
 This ambiguity becomes more interesting when we have closures. Consider the following program, which returns a closure.
-We don’t know where should we compute ``%1``; it can be either inside or outside the closure.
+We don't know where should we compute ``%1``; it can be either inside or outside the closure.
 
 .. code::
 
@@ -177,7 +177,7 @@ be outside of the if scope and closure. As you can see let-binding gives a more 
 and could be useful when we generate backend code (as such specification is in the IR).
 
 On the other hand, the dataflow form, which does not specify the scope of computation, does have its own advantages
--- namely, we don’t need to worry about where to put the let when we generate the code. The dataflow form also gives more freedom
+-- namely, we don't need to worry about where to put the let when we generate the code. The dataflow form also gives more freedom
 to the later passes to decide where to put the evaluation point. As a result, it might not be a bad idea to use data flow
 form of the program in the initial phases of optimizations when you find it is convenient.
 Many optimizations in Relay today are written to optimize dataflow programs.
@@ -199,7 +199,7 @@ framework developer choose the representation they are familiar with.
 This does, however, have some implications on how we write passes:
 
 - If you come from a dataflow background and want to handle lets, keep a map of var to the expressions so you can perform lookup when encountering a var. This likely means a minimum change as we already need a map from expressions to transformed expressions anyway. Note that this will effectively remove all the lets in the program.
-- If you come from a PL background and like A-normal form, we will provide a dataflow to A-normal form pass.
+- If you come from a PL background and like A-normal form, we provide `a dataflow to A-normal form pass <https://github.com/apache/tvm/blob/main/src/relay/transforms/to_a_normal_form.cc>`_.
 - For PL folks, when you are implementing something (like a dataflow-to-ANF transformation), be mindful that expressions can be DAGs, and this usually means that we should visit expressions with a ``Map<Expr, Result>`` and only compute the transformed result once, so the resulting expression keeps the common structure.
 
 There are additional advanced concepts such as symbolic shape inference, polymorphic functions

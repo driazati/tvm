@@ -66,6 +66,9 @@ from . import arith
 # support infra
 from . import support
 
+# tvm.relay
+from . import relay
+
 # Contrib initializers
 from .contrib import rocm as _rocm, nvcc as _nvcc, sdaccel as _sdaccel
 

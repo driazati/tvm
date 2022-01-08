@@ -335,7 +335,7 @@ std::string NormalizeError(std::string err_msg) {
   if (stack_trace.size() != 0 || file_name.length() != 0) {
     os << "Stack trace:\n";
     if (file_name.length() != 0) {
-      os << "  File \"" << file_name << "\", line " << line_number << "\n";
+      os << "  F2ile \"" << file_name << "\", line " << line_number << "\n";
     }
     // Print out stack traces, optionally trim the c++ traces
     // about the frontends (as they will be provided by the frontends).

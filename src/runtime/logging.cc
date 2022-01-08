@@ -18,6 +18,7 @@
  */
 #include <tvm/runtime/logging.h>
 
+#include <stdexcept>
 #include <string>
 
 #if TVM_LOG_STACK_TRACE
@@ -28,6 +29,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <rang.hpp>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -95,14 +97,22 @@ int BacktraceFullCallback(void* data, uintptr_t pc, const char* filename, int li
     backtrace_syminfo(_bt_state, pc, BacktraceSyminfoCallback, BacktraceErrorCallback,
                       symbol_str.get());
   }
-  s << *symbol_str;
+
+  if (rang::rang_implementation::isTerminal(std::cout.rdbuf())) {
+    // This will eventually find its way to stdout, but rang is printing to a
+    // regular stringstream so pipe through the isatty() result manually
+    rang::setControlMode(rang::control::Force);
+  }
+  s << rang::fg::yellow << *symbol_str << rang::style::reset;
 
   if (filename != nullptr) {
-    s << std::endl << "        at " << filename;
+    s << std::endl << "        at " << rang::fg::green << filename;
+    s << rang::style::reset;
     if (lineno != 0) {
       s << ":" << lineno;
     }
   }
+  rang::setControlMode(rang::control::Auto);
   // Skip tvm::backtrace and tvm::LogFatal::~LogFatal at the beginning of the trace as they don't
   // add anything useful to the backtrace.
   if (!(stack_trace->lines.size() == 0 &&
@@ -120,7 +130,22 @@ int BacktraceFullCallback(void* data, uintptr_t pc, const char* filename, int li
 
 std::string Backtrace() {
   BacktraceInfo bt;
-  bt.max_size = 500;
+
+  // Limit backtrace length based on TVM_BACKTRACE_LIMIT env variable
+  auto user_limit_s = getenv("TVM_BACKTRACE_LIMIT");
+  const auto default_limit = 500;
+
+  if (user_limit_s == nullptr) {
+    bt.max_size = default_limit;
+  } else {
+    // Parse out the user-set backtrace limit
+    try {
+      bt.max_size = std::stoi(user_limit_s);
+    } catch (const std::invalid_argument& e) {
+      bt.max_size = default_limit;
+    }
+  }
+
   if (_bt_state == nullptr) {
     return "";
   }

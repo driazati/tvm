@@ -1141,8 +1141,8 @@ struct PackedFuncValueConverter {
   }
 
 inline TVMArgValue TVMArgs::operator[](int i) const {
-  ICHECK_LT(i, num_args) << "not enough argument passed, " << num_args << " passed"
-                         << " but request arg[" << i << "].";
+  ICHECK_LT(i, num_args) << "not enough arguments passed, " << num_args << " passed"
+                         << " but expected " << i << ".";
   return TVMArgValue(values[i], type_codes[i]);
 }
 

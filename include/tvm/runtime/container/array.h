@@ -314,6 +314,7 @@ class Array : public ObjectRef {
    * \param init The initializer list
    */
   Array(std::initializer_list<T> init) {  // NOLINT(*)
+    std::cout << "INIT LIST FOR ARRAY!\n";
     Assign(init.begin(), init.end());
   }
 

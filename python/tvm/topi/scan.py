@@ -26,6 +26,7 @@ from .math import cast
 from . import utils
 
 
+
 def scanop(
     data: tvm.te.Tensor,
     binop: Callable[["tvm.Expr", "tvm.Expr"], "tvm.Expr"],

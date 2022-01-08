@@ -369,6 +369,19 @@ TOPI_DEFINE_OP_OVERLOAD(operator>>, right_shift);
  */
 TOPI_DEFINE_BCAST_OP(greater, { return (a > b); });
 
+// /*!
+//  * \fn greater
+//  * \brief Compute (A > B) with auto-broadcasting.
+//  *
+//  * \param A The first tensor, or Expr
+//  * \param B The second tensor, or Expr
+//  * \param name The name of the operation
+//  * \param tag The tag to mark the operation
+//  *
+//  * \return The result.
+//  */
+// TOPI_DEFINE_BCAST_OP(dot, { return (a > b); });
+
 /*!
  * \fn less
  * \brief Compute (A < B) with auto-broadcasting.

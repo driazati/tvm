@@ -109,6 +109,22 @@ def tan(data):
     return _make.tan(data)
 
 
+def dot(lhs, rhs):
+    """Compute dot product of data.
+
+    Parameters
+    ----------
+    data : relay.Expr
+        The input data
+
+    Returns
+    -------
+    result : relay.Expr
+        The computed result.
+    """
+    return _make.dot(lhs, rhs)
+
+
 def cos(data):
     """Compute elementwise cos of data.
 

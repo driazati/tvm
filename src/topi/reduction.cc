@@ -40,6 +40,10 @@ TVM_REGISTER_GLOBAL("topi.min").set_body([](TVMArgs args, TVMRetValue* rv) {
   *rv = topi::min(args[0], ArrayOrInt(args[1]), args[2]);
 });
 
+TVM_REGISTER_GLOBAL("topi.dot").set_body([](TVMArgs args, TVMRetValue* rv) {
+  *rv = topi::dot(args[0], args[1]);
+});
+
 TVM_REGISTER_GLOBAL("topi.max").set_body([](TVMArgs args, TVMRetValue* rv) {
   *rv = topi::max(args[0], ArrayOrInt(args[1]), args[2]);
 });

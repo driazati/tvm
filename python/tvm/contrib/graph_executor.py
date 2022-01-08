@@ -162,6 +162,21 @@ class GraphModule(object):
         self._load_params = module["load_params"]
         self._share_params = module["share_params"]
 
+    def __call__(self, **kwargs):
+        for k, v in kwargs.items():
+            if not isinstance(v, tvm.runtime.ndarray.NDArray):
+                v = tvm.nd.array(v)
+            self.set_input(k, v)
+        
+        self.run()
+
+        if self.get_num_outputs() == 0:
+            return None
+        elif self.get_num_outputs() == 1:
+            return self.get_output(0)
+        else:
+            return tuple(self.get_output(i) for i in range(self.get_num_outputs()))
+
     def set_input(self, key=None, value=None, **params):
         """Set inputs to the module via kwargs
 

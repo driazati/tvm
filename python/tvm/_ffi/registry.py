@@ -311,4 +311,5 @@ def _init_api_prefix(module_name, prefix):
         ff = _get_api(f)
         ff.__name__ = fname
         ff.__doc__ = "TVM PackedFunc %s. " % fname
+        # print("initting", target_module, ff.__name__)
         setattr(target_module, ff.__name__, ff)

@@ -37,6 +37,8 @@
 #include <string>
 #include <vector>
 
+#include "tvm/topi/utils.h"
+
 namespace tvm {
 namespace topi {
 
@@ -410,6 +412,56 @@ inline Tensor any(const Tensor& data, const Array<Integer>& axis, bool keepdims 
 inline Tensor min(const Tensor& data, const Array<Integer>& axis, bool keepdims = false,
                   bool atleast1d = false) {
   return CommReduce(data, axis, MinOp, keepdims, atleast1d);
+}
+
+/*!
+ * \brief Creates an operation that finds the minimum of elements over
+ * a given axis.
+ *
+ * \param data The input tensor
+ * \param axis The axis to find the minimum over. If axis is empty, the
+ * operation will find the minimum over all elements of the array.
+ * \param keepdims If this is set to true, the axes which are reduced are
+ * left in the result as dimensions with size one. This enables the result
+ * to broadcast correctly against the input array.
+ * \param atleast1d Whether the output need to be atleast1d.
+ *
+ * \return A Tensor whose op member is the min operation
+ */
+inline Tensor dot(const Tensor& lhs, const Tensor& rhs) {
+  return CommReduce(lhs, Array<Integer>(), ProdOp, false, false);
+  // return CommReduce(lhs, Array<Integer>(std::vector<Integer>({0, 0})), tvm::sum, false, false);
+  // const auto data = Array<Integer>({0});
+  // std::cout << "AXIS " << data;
+  // return Tensor({1, 2}, lhs->GetDataType(), lhs->op, 0);
+  // return CommReduce(lhs, data, ProdOp, false, false);
+  // auto r_axes = MakeReduceAxes(reduce_axes, data);
+  // auto compute = [&](const Array<Var>& indices) {
+  //   Array<PrimExpr> eval_range;
+  //   Array<Var> eval_indices;
+  //   int arg_counter = 0;
+  //   int red_counter = 0;
+
+  //   for (size_t i = 0; i < lhs->shape.size(); ++i) {
+  //     // bool squeeze_i = std::find(squeeze_axes.begin(), squeeze_axes.end(), i) !=
+  //     // squeeze_axes.end(); if (std::find(reduce_axes.begin(), reduce_axes.end(), i) !=
+  //     // reduce_axes.end()) {
+  //     //   // real_axis contains i
+  //     //   eval_range.push_back(r_axes[red_counter]);
+  //     //   eval_indices.push_back(r_axes[red_counter]->var);
+  //     //   red_counter++;
+  //     //   arg_counter += !squeeze_i;
+  //     //   continue;
+  //     // }
+  //     eval_range.push_back(indices[arg_counter]);
+  //     arg_counter++;
+  //   }
+
+  //   return func(data(eval_range), r_axes, {}, span);
+  // };
+
+  // return Tensor(lhs);
+  // return tvm::te::compute(lhs->shape, compute, "_dotproduct", kCommReduce);
 }
 
 /*!

@@ -183,6 +183,18 @@ _reg.register_strategy("invert_permutation", strategy.invert_permutation_strateg
 _reg.register_shape_func("invert_permutation", False, elemwise_shape_func)
 
 
+# dot
+@_reg.register_compute("dot")
+def compute_dot(attrs, inputs, output_type):
+    """Compute definition of dot"""
+    print("compute redfns")
+    return [topi.dot(inputs[0], inputs[1])]
+
+
+_reg.register_strategy("dot", strategy.dot_strategy)
+_reg.register_shape_func("dot", False, elemwise_shape_func)
+
+
 #####################
 #  Shape functions  #
 #####################

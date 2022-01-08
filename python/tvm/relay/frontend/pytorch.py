@@ -1560,6 +1560,12 @@ class PyTorchOpConverter:
 
         return _op.reduce.variance(data, axis=axis, keepdims=keepdims, unbiased=unbiased)
 
+    def dot(self, inputs, input_types):
+        # print("dotting")
+        print("frontend inputs", inputs)
+        print("frontend input types", input_types)
+        return _op.dot(inputs[0], inputs[1])
+
     def mean(self, inputs, input_types):
         data = inputs[0]
 
@@ -2952,6 +2958,7 @@ class PyTorchOpConverter:
             "aten::feature_dropout": self.dropout,
             "aten::alpha_dropout": self.dropout,
             "aten::mean": self.mean,
+            "aten::dot": self.dot,
             "aten::chunk": self.chunk,
             "aten::unsafe_chunk": self.chunk,
             "aten::matmul": self.matmul,

@@ -46,6 +46,7 @@
 #include "../make_op.h"
 #include "../op_common.h"
 #include "../type_relations.h"
+#include "tvm/runtime/data_type.h"
 
 namespace tvm {
 namespace relay {
@@ -3870,6 +3871,61 @@ RELAY_REGISTER_OP("adv_index")
     .set_attr<TOpIsStateful>("TOpIsStateful", false)
     .set_attr<TOpPattern>("TOpPattern", kInjective)
     .set_attr<FTVMCompute>("FTVMCompute", AdvIndexCompute);
+
+bool DotTypeRelation(const Array<Type>& types, int num_inputs, const Attrs& attrs,
+                     const TypeReporter& reporter) {
+  std::cout << "running dot type relation!\n";
+  std::cout << "have types: " << types << "\n";
+  ICHECK_EQ(types.size(), 3)
+      << "Expected 2 input tensors and 1 output tensor for a total of 3 types";
+  const auto lhs = types[0].as<TensorTypeNode>();
+  const auto rhs = types[1].as<TensorTypeNode>();
+  if (lhs == nullptr || rhs == nullptr) {
+    ICHECK(false) << "wanted tensortypes";
+    return false;
+  }
+
+  std::cout << "LHS shape: " << lhs->shape << "\n";
+  std::cout << "RHS shape: " << rhs->shape << "\n";
+  // ICHECK(lhs->shape)
+  // ICHECK(false) << "fail on purpose\n";
+  reporter->Assign(types[2], TensorType({}, DataType::Float(32)));
+
+  std::cout << "Set output to: " << types[2] << "\n";
+  // ICHECK(lhs->shape)
+  // reporter->Assign()
+  return true;
+}
+
+RELAY_REGISTER_OP("dot")
+    .describe(R"doc(Do the dot ptoduct.)doc" TVM_ADD_FILELINE)
+    .set_num_inputs(2)
+    .add_argument("lhs", "Tensor", "The input tensor.")
+    .add_argument("rhs", "Tensor", "The input tensor.")
+    .set_support_level(3)
+    .add_type_rel("Dot", DotTypeRelation)
+    // kOpaque means no fusing!
+    .set_attr<TOpPattern>("TOpPattern", kOpaque);
+// this comes from python??? ok
+// .set_attr<FTVMCompute>("FTVMCompute",
+//                        [](const Attrs& attrs, const Array<te::Tensor>& inputs,
+//                           const Type& out_type) -> Array<te::Tensor> {
+//                          ICHECK_EQ(inputs.size(), 2U);
+//                          return {topi::dot(inputs[0], inputs[1])};
+//                        });
+
+Expr MakeDot(Expr lhs, Expr rhs) {
+  // auto attrs = make_object<ScanopAttrs>();
+  // attrs->dtype = dtype;
+  // attrs->axis = axis;
+  // attrs->exclusive = exclusive;
+  std::cout << "Making dot expression from " << lhs << " and " << rhs << "\n";
+  static const Op& op = Op::Get("dot");
+  return Call(op, {lhs, rhs}, Attrs(), {});
+}
+
+// Expose relay.op._make.dot to Python
+TVM_REGISTER_GLOBAL("relay.op._make.dot").set_body_typed(MakeDot);
 
 TVM_REGISTER_NODE_TYPE(ScanopAttrs);
 

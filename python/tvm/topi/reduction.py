@@ -67,6 +67,12 @@ def sum(data, axis=None, keepdims=False):
     return cpp.sum(data, axis, keepdims)
 
 
+def dot(lhs, rhs):
+    print("wow, its topi with")
+    print("lhs", lhs)
+    print("rhs", rhs)
+    return cpp.dot(lhs, rhs)
+
 def all(data, axis=None, keepdims=False):
     """Logical AND of array elements over a given axis or a list of axes
 

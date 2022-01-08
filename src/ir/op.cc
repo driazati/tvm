@@ -71,6 +71,10 @@ void OpRegEntry::reset_attr(const std::string& attr_name) {
 }
 
 void OpRegEntry::UpdateAttr(const String& key, TVMRetValue value, int plevel) {
+  if (this->op()->name == "dot") {
+    std::cout << "Updating attr for op " << this->op() << " with " << key << " with level "
+              << plevel << "\n";
+  }
   OpRegistry::Global()->UpdateAttr(key, op_, value, plevel);
 }
 

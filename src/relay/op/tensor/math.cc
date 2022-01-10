@@ -111,5 +111,37 @@ on the operands)doc" TVM_ADD_FILELINE)
     .set_attr<FTVMCompute>("FTVMCompute", EinsumCompute)
     .set_attr<TOpPattern>("TOpPattern", kInjective);
 
+bool DotProductRel(const Array<Type>& types, int num_inputs, const Attrs& attrs,
+                   const TypeReporter& reporter) {
+  ICHECK_EQ(types.size(), 3) << "Expected 2 types for dot product, found " << types.size();
+
+  const auto lhs = types[0].as<TensorTypeNode>();
+  // TODO: Is this the correct way to verify? The tutorial still returns 'false'
+  ICHECK(lhs != nullptr) << "Expected tensor for input 0";
+  const auto rhs = types[1].as<TensorTypeNode>();
+  ICHECK(rhs != nullptr) << "Expected tensor for input 1";
+
+  // TODO: How to unify tensor dtypes? e.g. [float32] dot [float64]
+  reporter->Assign(types[2], TensorType(lhs->shape, lhs->dtype));
+
+  return true;
+}
+
+RELAY_REGISTER_OP("dot")
+    .describe(R"doc(Compute the dot product of two 1D tensors)doc" TVM_ADD_FILELINE)
+    .set_num_inputs(2)
+    .add_argument("lhs", "tensor", "left hand side of dot product")
+    .add_argument("rhs", "tensor", "right hand side of dot product")
+    .set_support_level(11)
+    .add_type_rel("dot", DotProductRel)
+    .set_attr<TOpPattern>("TOpPattern", kOpaque);
+
+Expr MakeDot(Expr lhs, Expr rhs) {
+  static const auto& op = Op::Get("dot");
+  return Call(op, {lhs, rhs}, Attrs(), {});
+}
+
+TVM_REGISTER_GLOBAL("relay.op._make.dot").set_body_typed(MakeDot);
+
 }  // namespace relay
 }  // namespace tvm

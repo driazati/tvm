@@ -1819,3 +1819,24 @@ def einsum_strategy(attrs, inputs, out_type, target):
         name="einsum.generic",
     )
     return strategy
+
+
+def wrap_compute_dot(topi_compute):
+    """Wrap dot topi compute"""
+
+    def _compute_dot(attrs, inputs, _):
+        return [topi_compute(inputs[0], inputs[1])]
+
+    return _compute_dot
+
+
+@override_native_generic_func("dot_strategy")
+def dot_strategy(attrs, inputs, out_type, target):
+    """dot generic strategy"""
+    strategy = _op.OpStrategy()
+    strategy.add_implementation(
+        wrap_compute_dot(topi.dot),
+        wrap_topi_schedule(topi.generic.schedule_dot),
+        name="dot.generic",
+    )
+    return strategy

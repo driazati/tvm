@@ -32,3 +32,9 @@ def schedule_einsum(outs):
       The computation schedule for the op.
     """
     return _default_schedule(outs, False)
+
+
+def schedule_dot(outs):
+  print("SCHEDULING DOT")
+  print(outs)
+  exit(0)

@@ -20,3 +20,5 @@ from . import strategy
 
 # einsum
 _reg.register_strategy("einsum", strategy.einsum_strategy)
+
+_reg.register_strategy("dot", strategy.dot_strategy)

@@ -42,3 +42,11 @@ def einsum(subscripts, *operand):
     """
 
     return cpp.einsum(subscripts, operand)
+
+
+def dot(lhs, rhs):
+    # TODO: Move this out of einsum.py
+    print("running topi.dot")
+    print(lhs)
+    print(rhs)
+    exit(0)

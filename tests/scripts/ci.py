@@ -270,7 +270,8 @@ def lint() -> None:
     docker(
         name="ci-lint",
         image="ci_lint",
-        scripts=["./tests/scripts/task_lint.sh"],
+        # scripts=["./tests/scripts/task_lint.sh"],
+        scripts=["./tests/scripts/task_lint.py"],
         env={},
     )
 

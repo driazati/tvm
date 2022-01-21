@@ -248,3 +248,7 @@ _docs/
 jvm/target
 .config/configstore/
 .ci-py-scripts/
+
+# patch files
+*.orig
+*.rej

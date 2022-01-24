@@ -18,6 +18,7 @@
 
 import json
 import subprocess
+import sys
 import re
 from urllib import request
 from typing import Dict, Tuple, Any
@@ -39,7 +40,7 @@ class GitHubRepo:
         return self._post("https://api.github.com/graphql", {"query": query})
 
     def _post(self, full_url: str, body: Dict[str, Any]) -> Dict[str, Any]:
-        print("Requesting POST to", full_url, "with", body)
+        print("Requesting POST to", full_url, "with", body, file=sys.stderr)
         req = request.Request(full_url, headers=self.headers(), method="POST")
         req.add_header("Content-Type", "application/json; charset=utf-8")
         data = json.dumps(body)
@@ -55,7 +56,7 @@ class GitHubRepo:
 
     def get(self, url: str) -> Dict[str, Any]:
         url = self.base + url
-        print("Requesting GET to", url)
+        print("Requesting GET to", url, file=sys.stderr)
         req = request.Request(url, headers=self.headers())
         with request.urlopen(req) as response:
             response = json.loads(response.read())
@@ -63,7 +64,7 @@ class GitHubRepo:
 
     def delete(self, url: str) -> Dict[str, Any]:
         url = self.base + url
-        print("Requesting DELETE to", url)
+        print("Requesting DELETE to", url, file=sys.stderr)
         req = request.Request(url, headers=self.headers(), method="DELETE")
         with request.urlopen(req) as response:
             response = json.loads(response.read())
@@ -90,6 +91,6 @@ def parse_remote(remote: str) -> Tuple[str, str]:
 
 def git(command):
     command = ["git"] + command
-    print("Running", command)
+    print("Running", command, file=sys.stderr)
     proc = subprocess.run(command, stdout=subprocess.PIPE, check=True)
     return proc.stdout.decode().strip()

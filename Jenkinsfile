@@ -40,8 +40,6 @@
 //
 
 // Hashtag in the source to build current CI docker builds
-//
-//
 import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
 
 // NOTE: these lines are scanned by docker/dev_common.sh. Please update the regex as needed. -->
@@ -159,21 +157,51 @@ stage('Prepare') {
   }
 }
 
+
+def get_run_tags(pr_number) {
+  // is_docs_only_build = sh (
+  //   returnStatus: true,
+  //   script: './tests/scripts/git_change_docs.sh',
+  //   label: 'Check for docs only changes',
+  // )
+  // skip_ci = should_skip_ci(env.CHANGE_ID)
+  run_tags = get_run_tags(env.CHANGE_ID)
+}
+
+
+def check_tags(required_tags) {
+  // Always run everything if 'all' is in the tags or if tags is empty
+  if ('all' in run_tags) {
+    return true
+  }
+  for (tag in required_tags) {
+    if (!(tag in run_tags)) {
+      return false
+    }
+  }
+  return true
+}
+
+
 stage('Sanity Check') {
   timeout(time: max_time, unit: 'MINUTES') {
     node('CPU') {
       ws(per_exec_ws('tvm/sanity')) {
         init_git()
-        is_docs_only_build = sh (
-          returnStatus: true,
-          script: './tests/scripts/git_change_docs.sh',
-          label: 'Check for docs only changes',
-        )
-        skip_ci = should_skip_ci(env.CHANGE_ID)
-        sh (
-          script: "${docker_run} ${ci_lint}  ./tests/scripts/task_lint.sh",
-          label: 'Run lint',
-        )
+        run_tags = sh(
+          returnStdout: true,
+          script: './tests/scripts/get_run_tags.py',
+          label: 'Find tags for run',
+        ).trim().split(',') as Set<String>
+        // skip_ci = should_skip_ci(env.CHANGE_ID)
+        run_tags = get_run_tags(env.CHANGE_ID)
+
+        if ('lint' in run_tags) {
+          sh (
+            script: "${docker_run} ${ci_lint}  ./tests/scripts/task_lint.sh",
+            label: 'Run lint',
+          )
+        }
       }
     }
   }
@@ -259,7 +287,7 @@ def cpp_unittest(image) {
 
 stage('Build') {
     parallel 'BUILD: GPU': {
-      if (!skip_ci) {
+      if (check_tags('build', 'gpu')) {
         node('GPUBUILD') {
           ws(per_exec_ws('tvm/build-gpu')) {
             init_git()
@@ -274,7 +302,7 @@ stage('Build') {
       }
   },
   'BUILD: CPU': {
-    if (!skip_ci && is_docs_only_build != 1) {
+    if (check_tags('build', 'gpu')) {
       node('CPU') {
         ws(per_exec_ws('tvm/build-cpu')) {
           init_git()
@@ -297,7 +325,7 @@ stage('Build') {
     }
   },
   'BUILD: WASM': {
-    if (!skip_ci && is_docs_only_build != 1) {
+    if (check_tags('build', 'gpu')) {
       node('CPU') {
         ws(per_exec_ws('tvm/build-wasm')) {
           init_git()
@@ -320,7 +348,7 @@ stage('Build') {
     }
   },
   'BUILD: i386': {
-    if (!skip_ci && is_docs_only_build != 1) {
+    if (check_tags('build', 'i386')) {
       node('CPU') {
         ws(per_exec_ws('tvm/build-i386')) {
           init_git()
@@ -337,7 +365,7 @@ stage('Build') {
     }
   },
   'BUILD: arm': {
-    if (!skip_ci && is_docs_only_build != 1) {
+    if (check_tags('build', 'arm')) {
       node('ARM') {
         ws(per_exec_ws('tvm/build-arm')) {
           init_git()
@@ -354,7 +382,7 @@ stage('Build') {
     }
   },
   'BUILD: QEMU': {
-    if (!skip_ci && is_docs_only_build != 1) {
+    if (check_tags('build', 'qemu')) {
       node('CPU') {
         ws(per_exec_ws('tvm/build-qemu')) {
           init_git()
@@ -381,7 +409,7 @@ stage('Build') {
 
 stage('Test') {
     parallel 'unittest: GPU': {
-      if (!skip_ci && is_docs_only_build != 1) {
+      if (check_tags('unittest', 'gpu')) {
         node('TensorCore') {
           ws(per_exec_ws('tvm/ut-python-gpu')) {
             init_git()
@@ -413,7 +441,7 @@ stage('Test') {
       }
     },
     'integration: CPU': {
-      if (!skip_ci && is_docs_only_build != 1) {
+      if (check_tags('integration', 'cpu')) {
         node('CPU') {
           ws(per_exec_ws('tvm/ut-python-cpu')) {
             init_git()
@@ -433,7 +461,7 @@ stage('Test') {
       }
     },
     'unittest: CPU': {
-      if (!skip_ci && is_docs_only_build != 1) {
+      if (check_tags('unittest', 'cpu')) {
         node('CPU') {
           ws(per_exec_ws("tvm/ut-python-cpu")) {
             init_git()
@@ -455,7 +483,7 @@ stage('Test') {
       }
     },
     'python3: i386': {
-      if (!skip_ci && is_docs_only_build != 1) {
+      if (check_tags('unittest', 'i386')) {
         node('CPU') {
           ws(per_exec_ws('tvm/ut-python-i386')) {
             init_git()
@@ -477,7 +505,7 @@ stage('Test') {
       }
     },
     'python3: arm': {
-      if (!skip_ci && is_docs_only_build != 1) {
+      if (check_tags('unittest', 'arm')) {
         node('ARM') {
           ws(per_exec_ws('tvm/ut-python-arm')) {
             init_git()
@@ -499,7 +527,7 @@ stage('Test') {
       }
     },
   'topi: GPU': {
-  if (!skip_ci && is_docs_only_build != 1) {
+  if (check_tags('integration', 'gpu')) {
     node('GPU') {
       ws(per_exec_ws('tvm/topi-python-gpu')) {
         init_git()
@@ -519,7 +547,7 @@ stage('Test') {
   }
   },
   'frontend: GPU': {
-    if (!skip_ci && is_docs_only_build != 1) {
+    if (check_tags('integration', 'gpu')) {
       node('GPU') {
         ws(per_exec_ws('tvm/frontend-python-gpu')) {
           init_git()
@@ -539,7 +567,7 @@ stage('Test') {
     }
   },
   'frontend: CPU': {
-    if (!skip_ci && is_docs_only_build != 1) {
+    if (check_tags(['integration', 'cpu'])) {
       node('CPU') {
         ws(per_exec_ws('tvm/frontend-python-cpu')) {
           init_git()
@@ -559,7 +587,7 @@ stage('Test') {
     }
   },
   'docs: GPU': {
-    if (!skip_ci) {
+    if (check_tags(['docs'])) {
       node('TensorCore') {
         ws(per_exec_ws('tvm/docs-python-gpu')) {
           init_git()

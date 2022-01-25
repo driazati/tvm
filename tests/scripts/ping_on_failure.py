@@ -235,12 +235,13 @@ if __name__ == "__main__":
     if old_all_data != all_data:
         message_diff(old_all_data, all_data)
 
-    with open(REPO_ROOT / "statuses.json", "w") as f:
-        json.dump(all_data, f)
-    
-    git(["add", "statuses.json"])
-    git(["config", "user.email", "email@example.com"])
-    git(["config", "user.name", "Your Name"])
-    git(["commit", "-m'update status'"])
-    git(["push"])
+    if old_all_data != all_data:
+        with open(REPO_ROOT / "statuses.json", "w") as f:
+            json.dump(all_data, f)
+
+        git(["add", "statuses.json"])
+        git(["config", "user.email", "email@example.com"])
+        git(["config", "user.name", "Your Name"])
+        git(["commit", "-m'update status'"])
+        git(["push"])
 

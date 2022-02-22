@@ -1,0 +1,8 @@
+githubRepoOwner: apache
+githubRepoName: tvm
+githubHost: github.com
+requireChecks: true
+requireApproval: true
+githubRemote: me
+githubBranch: main
+mergeMethod: rebase

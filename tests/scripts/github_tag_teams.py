@@ -20,11 +20,55 @@ import os
 import json
 import argparse
 import re
+from urllib import request
 from urllib import error
 from typing import Dict, Any, List, Tuple
 
 
 from git_utils import git, GitHubRepo, parse_remote, find_ccs
+
+
+def find_required_reviewers(topic: str) -> List[str]:
+    url = "https://github.com/apache/tvm/raw/main/CONTRIBUTORS.md"
+    req = request.Request(url)
+    with request.urlopen(req) as response:
+        content = response.read().decode()
+    print("finding reviewers")
+    sections = content.split("\n## ")
+    committers_section = None
+    for section in sections:
+        if section.startswith("Committers"):
+            committers_section = section
+            break
+    if committers_section is None:
+        raise RuntimeError(f"Unable to find '## Committers' in {url}'")
+
+    committers = [line.strip()[2:] for line in committers_section.split("\n") if line.startswith("-")]
+    all_teams = []
+    teams_by_member = {}
+    for committer in committers:
+        user, teams = committer.split(" - ")
+        user = user.split(": ")[1].replace("@", "")
+        teams = [t.strip().lower() for t in teams.split(",")]
+        for team in teams:
+            if team not in teams_by_member:
+                teams_by_member[team] = []
+            teams_by_member[team].append(user)
+        all_teams += teams
+        # print(user, teams)
+
+    print(json.dumps(teams_by_member, indent=2))
+    # all_teams = list(sorted(set(all_teams)))
+    # print(all_teams)
+    # print(content.split("\n## "))
+
+
+def list_all_pr_tags():
+    pass
+
+
+find_required_reviewers("relay")
+exit(0)
 
 
 def parse_line(line: str) -> Tuple[str, List[str]]:

@@ -1,0 +1,192 @@
+finding reviewers
+{
+  "rocm": [
+    "adityaatluri"
+  ],
+  "byoc": [
+    "mbaret",
+    "trevor-m",
+    "comaniac (PMC)"
+  ],
+  "arm": [
+    "mbaret",
+    "giuseros",
+    "Mousius"
+  ],
+  "relay": [
+    "mbrookhart",
+    "tqchen",
+    "wweic",
+    "zhiics",
+    "anijain2305",
+    "ZihengJiang",
+    "MarisaKirisame",
+    "vinx13",
+    "yzhliu",
+    "AndrewZhaoLuo",
+    "slyubomirsky",
+    "masahi",
+    "electriclilies",
+    "jroesch",
+    "Mousius",
+    "junrushao1994",
+    "icemelon",
+    "comaniac (PMC)",
+    "merrymercy"
+  ],
+  "frontends": [
+    "mbrookhart",
+    "jwfromm",
+    "Huyuwei",
+    "hlu1",
+    "AndrewZhaoLuo",
+    "kazum",
+    "siju-samuel",
+    "srkreddy1238",
+    "FrozenGene"
+  ],
+  "vta": [
+    "liangfu",
+    "tmoreau89",
+    "vegaluisjose"
+  ],
+  "chisel": [
+    "liangfu",
+    "vegaluisjose"
+  ],
+  "intel fpga": [
+    "liangfu"
+  ],
+  "c runtime": [
+    "liangfu"
+  ],
+  "topi": [
+    "tqchen",
+    "jwfromm",
+    "Huyuwei",
+    "vinx13",
+    "yzhliu",
+    "masahi",
+    "icemelon",
+    "ajtulloch",
+    "Laurawly:",
+    "kevinthesun (PMC):",
+    "FrozenGene",
+    "eqy",
+    "merrymercy"
+  ],
+  "compiler": [
+    "tqchen",
+    "ZihengJiang",
+    "trevor-m",
+    "junrushao1994",
+    "ajtulloch"
+  ],
+  "docs": [
+    "tqchen"
+  ],
+  "runtime": [
+    "wweic",
+    "(PMC) areusch",
+    "ajtulloch",
+    "FrozenGene",
+    "eqy"
+  ],
+  "vm": [
+    "wweic"
+  ],
+  "quantization": [
+    "zhiics",
+    "jwfromm",
+    "anijain2305"
+  ],
+  "pass manager": [
+    "zhiics"
+  ],
+  "tir": [
+    "Hzfengsy",
+    "spectrometerHBH"
+  ],
+  "arith": [
+    "spectrometerHBH"
+  ],
+  "tvm-script": [
+    "spectrometerHBH"
+  ],
+  "sgx": [
+    "nhynes:"
+  ],
+  "rust": [
+    "nhynes:"
+  ],
+  "auto_scheduler": [
+    "jcf94",
+    "comaniac (PMC)",
+    "merrymercy"
+  ],
+  "ethos-u": [
+    "manupa-arm",
+    "Mousius"
+  ],
+  "memory planner": [
+    "manupa-arm"
+  ],
+  "jvm": [
+    "yzhliu"
+  ],
+  "nnpack": [
+    "hlu1"
+  ],
+  "ci": [
+    "Lunderberg"
+  ],
+  "vulkan backend": [
+    "Lunderberg"
+  ],
+  "amp": [
+    "AndrewZhaoLuo"
+  ],
+  "opencl": [
+    "kazum"
+  ],
+  "tvmc": [
+    "leandron"
+  ],
+  "hexagon": [
+    "kparzysz-quic"
+  ],
+  "llvm": [
+    "kparzysz-quic"
+  ],
+  "microtvm": [
+    "(PMC) areusch"
+  ],
+  "aot": [
+    "giuseros"
+  ],
+  "amd backend": [
+    "csullivan"
+  ],
+  "golang": [
+    "srkreddy1238"
+  ],
+  "opengl": [
+    "phisiart"
+  ],
+  "web": [
+    "phisiart"
+  ],
+  "vision": [
+    "kevinthesun (PMC):"
+  ],
+  "hybrid script": [
+    "were:"
+  ],
+  "autotvm": [
+    "eqy",
+    "merrymercy"
+  ],
+  "rpc": [
+    "eqy"
+  ]
+}

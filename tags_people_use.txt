@@ -1,0 +1,155 @@
+m3c 6
+testing 6
+auto scheduler 6
+m1c 6
+web 6
+texture support 6
+torch, qnn 6
+module 6
+submodule 6
+tophub 7
+fq2i 7
+ez 7
+typo 7
+release 7
+m3a 7
+strategy 7
+debug 7
+version 7
+hybrid 7
+golang 7
+ios 8
+android 8
+api 8
+dyn 8
+do not review 9
+cudnn 9
+amp 9
+coreml 9
+apps 9
+utvm 9
+crt 9
+trt 9
+windows 9
+arm 9
+intrin 9
+minor 10
+quantize 10
+tvm4j 10
+x86 10
+darknet 10
+zephyr 11
+unittest 11
+usmp 11
+rvm 11
+object 11
+verilator 11
+caffe frontend 11
+executor 11
+m2a 11
+hybrid script 11
+app 11
+api-change 11
+nnpack 11
+transform 12
+hotfix 12
+aot 13
+tests 13
+tensorrt 13
+paddlepaddle 13
+relay, topi 13
+convertlayout 13
+parser 13
+backend 13
+tsim 13
+bug 14
+flaky 14
+ffi 15
+skip ci 16
+lint 16
+cutlass 16
+acl 17
+relay/topi 17
+patternlang 17
+py 17
+autotvm v2.0 17
+node 17
+cmsis-nn 18
+rfc 18
+m4a 19
+rocm 19
+unittests 20
+lang 20
+te 21
+training 21
+metal 21
+team 21
+quantization 22
+chisel 23
+cmake 26
+ansor 27
+ethosn 28
+opencl 30
+python 30
+tvmscript 32
+keras 34
+µtvm 34
+tf 35
+tvm 38
+contrib 39
+mxnet 39
+target 40
+llvm 41
+schedule 42
+vulkan 43
+backport-0.6 45
+tensorir 47
+tutorial 48
+pytorch 49
+rust 54
+metaschedule 55
+torch 55
+build 56
+qnn 57
+vm 57
+hexagon 58
+ir 58
+cuda 62
+tvmc 65
+rpc 65
+micronpu 77
+nnvm 80
+docker 81
+test 82
+wip 85
+microtvm 86
+arith 87
+tensorflow 90
+byoc 93
+autotvm 96
+codegen 97
+autoscheduler 98
+tflite 103
+op 107
+doc 119
+community 123
+vta 139
+tir 144
+refactor 150
+pass 152
+fix 153
+docs 162
+onnx 181
+bugfix 187
+runtime 242
+ci 258
+frontend 337
+topi 358
+relay 1034
+
+
+actions:
+rename frontends -> frontend
+remove lunderberg from "ci", add @areusch
+no one owns onnx
+rename auto_scheduler -> autoscheduler

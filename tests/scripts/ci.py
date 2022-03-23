@@ -224,6 +224,7 @@ def docs(
     cpu: bool = False,
     interactive: bool = False,
     skip_build: bool = False,
+    verbose: bool = False,
 ) -> None:
     """
     Build the documentation from gallery/ and docs/. By default this builds only
@@ -236,6 +237,7 @@ def docs(
     cpu -- Run with the ci-cpu image and use CMake defaults for building TVM (if no GPUs are available)
     skip_build -- skip build and setup scripts
     interactive -- start a shell after running build / test scripts
+    verbose -- enable verbose build
     """
     config = "./tests/scripts/task_config_build_gpu.sh"
     build_dir = get_build_dir("gpu")
@@ -299,6 +301,7 @@ def docs(
         "PYTHON_DOCS_ONLY": "0" if full else "1",
         "IS_LOCAL": "1",
         "TVM_LIBRARY_PATH": str(REPO_ROOT / build_dir),
+        "VERBOSE": "on" if verbose else "off",
     }
     check_build()
     docker(name=gen_name("docs"), image=image, scripts=scripts, env=env, interactive=interactive)
@@ -351,13 +354,18 @@ def generate_command(
     """
 
     def fn(
-        tests: Optional[List[str]], skip_build: bool = False, interactive: bool = False, **kwargs
+        tests: Optional[List[str]],
+        skip_build: bool = False,
+        interactive: bool = False,
+        verbose: bool = False,
+        **kwargs,
     ) -> None:
         """
         arguments:
         tests -- pytest test IDs (e.g. tests/python or tests/python/a_file.py::a_test[param=1])
         skip_build -- skip build and setup scripts
         interactive -- start a shell after running build / test scripts
+        verbose -- enable verbose build
         """
         if precheck is not None:
             precheck()
@@ -395,6 +403,7 @@ def generate_command(
                 # determine which build directory to use (i.e. if there are
                 # multiple copies of libtvm.so laying around)
                 "TVM_LIBRARY_PATH": str(REPO_ROOT / get_build_dir(name)),
+                "VERBOSE": "on" if verbose else "off",
             },
             interactive=interactive,
         )

@@ -77,7 +77,14 @@ if __name__ == "__main__":
     target = ""
     if args.cmake_target:
         target = args.cmake_target
-    sh.run(f"cmake --build . -- {target} VERBOSE=1 -j{num_cpus}", cwd=build_dir)
+
+    args = [f"-j{num_cpus}"]
+    if "VERBOSE" not in os.environ or os.environ["VERBOSE"].lower() in {"1", "true", "on"}:
+        args.append("VERBOSE=1")
+    else:
+        args.append("VERBOSE=0")
+
+    sh.run(f"cmake --build . -- {target}" + " ".join(args), cwd=build_dir)
 
     if use_sccache:
         logging.info("===== sccache stats =====")

@@ -196,6 +196,8 @@ if __name__ == "__main__":
     while True:
         prs = r["data"]["repository"]["pullRequests"]["nodes"]
         all_prs += prs
+        if len(all_prs) > 400:
+            break
         # break
 
         # for pr in prs:

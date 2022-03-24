@@ -47,6 +47,12 @@ from .ir import PoolInfo
 from .ir import WorkspaceMemoryPools
 from . import ir
 
+# tvm.version
+try:
+    from . import version
+except ImportError:
+    from . import _version as version
+
 # tvm.tir
 from . import tir
 

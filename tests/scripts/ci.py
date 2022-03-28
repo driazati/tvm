@@ -351,13 +351,14 @@ def generate_command(
     """
 
     def fn(
-        tests: Optional[List[str]], skip_build: bool = False, interactive: bool = False, **kwargs
+            tests: Optional[List[str]], skip_build: bool = False, interactive: bool = False, command: Optional[str] = None, **kwargs
     ) -> None:
         """
         arguments:
         tests -- pytest test IDs (e.g. tests/python or tests/python/a_file.py::a_test[param=1])
         skip_build -- skip build and setup scripts
         interactive -- start a shell after running build / test scripts
+        command -- command to run inside container
         """
         if precheck is not None:
             precheck()
@@ -385,6 +386,9 @@ def generate_command(
         for option_name, (_, extra_scripts) in options.items():
             if kwargs.get(option_name, False):
                 scripts += extra_scripts
+
+        if command is not None:
+            scripts.append(command)
 
         docker(
             name=gen_name(f"ci-{name}"),
@@ -625,7 +629,7 @@ def main():
     CPU and GPU images are both over 25GB) and may take some time to download on first use.
     """
     parser = argparse.ArgumentParser(description=description)
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="subcommand")
 
     commands = {}
 
@@ -641,15 +645,15 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command is None:
+    if args.subcommand is None:
         # Command not found in list, error out
         parser.print_help()
         exit(1)
 
-    func = commands[args.command]
+    func = commands[args.subcommand]
 
     # Extract out the parsed args and invoke the relevant function
-    kwargs = {k: getattr(args, k) for k in dir(args) if not k.startswith("_") and k != "command"}
+    kwargs = {k: getattr(args, k) for k in dir(args) if not k.startswith("_") and k != "subcommand"}
     func(**kwargs)
 
 

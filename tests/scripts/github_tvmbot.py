@@ -37,7 +37,8 @@ CIJob = Dict[str, Any]
 Comment = Dict[str, Any]
 CommentChecker = Callable[[Comment], bool]
 
-EXPECTED_JOBS = ["tvm-ci/pr-head"]
+# EXPECTED_JOBS = ["tvm-ci/pr-head"]
+EXPECTED_JOBS = []
 TVM_BOT_JENKINS_TOKEN = os.environ["TVM_BOT_JENKINS_TOKEN"]
 JENKINS_URL = "https://ci.tlcpack.ai/"
 THANKS_MESSAGE = r"(\s*)Thanks for contributing to TVM!   Please refer to guideline https://tvm.apache.org/docs/contribute/ for useful information and tips. After the pull request is submitted, please request code reviews from \[Reviewers\]\(https://github.com/apache/incubator-tvm/blob/master/CONTRIBUTORS.md#reviewers\) by  them in the pull request thread.(\s*)"

@@ -19,10 +19,14 @@ jobs:
       issues: write
       pull-requests: write
       statuses: write
-    if: github.repository == 'apache/tvm'
+    if: github.repository == 'driazati/tvm'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          set -eux
+          pip install -r jenkins/requirements.txt
       - name: Open PR to update Docker images
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

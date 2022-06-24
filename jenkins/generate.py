@@ -78,12 +78,19 @@ if __name__ == "__main__":
     help = "Regenerate Jenkinsfile from template"
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument("--check", action="store_true", help="just verify the output didn't change")
+    parser.add_argument(
+        "--no-timestamp", action="store_true", help="skip changing the timestamp in the Jenkinsfile"
+    )
     args = parser.parse_args()
 
     with open(JENKINSFILE) as f:
         content = f.read()
 
-    data["generated_time"] = datetime.datetime.now().isoformat()
+    if args.no_timestamp:
+        existing_time = re.search(r"^// Generated at (.*)", content, flags=re.MULTILINE)
+        data["generated_time"] = existing_time.groups()[0]
+    else:
+        data["generated_time"] = datetime.datetime.now().isoformat()
 
     environment = jinja2.Environment(
         loader=jinja2.FileSystemLoader(REPO_ROOT),

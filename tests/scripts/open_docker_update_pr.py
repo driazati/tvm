@@ -20,15 +20,19 @@ import argparse
 import re
 import logging
 import datetime
+import sys
 import os
+import subprocess
 import json
 from urllib import error
 from typing import List, Dict, Any, Optional, Callable
 from git_utils import git, parse_remote, GitHubRepo
-from cmd_utils import REPO_ROOT, init_log
+from cmd_utils import REPO_ROOT, init_log, Sh
 from should_rebuild_docker import docker_api
 
 JENKINSFILE = REPO_ROOT / "jenkins" / "Jenkinsfile.j2"
+GENERATED_JENKINSFILE = REPO_ROOT / "Jenkinsfile"
+GENERATE_SCRIPT = REPO_ROOT / "jenkins" / "generate.py"
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 BRANCH = "nightly-docker-update"
 
@@ -147,6 +151,12 @@ if __name__ == "__main__":
         with open(JENKINSFILE, "w") as f:
             f.write("".join(new_content))
 
+    # Re-generate the Jenkinsfile
+    logging.info("Regenerating Jenkinsfile")
+    # The timestamp can be skipped here since this should only edit lines in place
+    # and won't run into generated merge issues
+    subprocess.run([sys.executable, str(GENERATE_SCRIPT), "--no-timestamp"], check=True)
+
     # Publish the PR
     title = "[ci][docker] Nightly Docker image update"
     body = "This bumps the Docker images to the latest versions from Docker Hub."
@@ -158,6 +168,7 @@ if __name__ == "__main__":
         logging.info(f"Creating git commit")
         git(["checkout", "-B", BRANCH])
         git(["add", str(JENKINSFILE.relative_to(REPO_ROOT))])
+        git(["add", str(GENERATED_JENKINSFILE.relative_to(REPO_ROOT))])
         git(["config", "user.name", "tvm-bot"])
         git(["config", "user.email", "95660001+tvm-bot@users.noreply.github.com"])
         git(["commit", "-m", message])

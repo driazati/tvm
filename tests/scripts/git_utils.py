@@ -90,6 +90,7 @@ class GitHubRepo:
                 response = json.loads(response.read())
         except error.HTTPError as e:
             logging.info(f"Error response: {e.read().decode()}")
+            e.seek(0)
             raise e
 
         return response

@@ -136,3 +136,4 @@ tasks.
   ```bash
   ./docker/build.sh ci_cpu tests/scripts/task_golang.sh
   ```
+hi

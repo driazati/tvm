@@ -35,10 +35,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  MacOS:
-    if: ${{ github.repository == 'apache/tvm' }}
-    runs-on: macOS-latest
+  MacOS2:
+    if: ${{ github.repository == 'driazati/tvm' }}
+    runs-on: ubuntu-latest
     steps:
+      - name: quit
+        run: |
+          exit 1
+  MacOS:
+    if: ${{ github.repository == 'driazati/tvm' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: quit
+        run: |
+          exit 1
       - uses: actions/checkout@v2
         with:
           submodules: 'recursive'

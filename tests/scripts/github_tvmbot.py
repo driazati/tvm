@@ -468,7 +468,10 @@ class PR:
 
     def trigger_gha_ci(self, sha: str) -> None:
         logging.info(f"POST-ing a workflow_dispatch event to main.yml")
-        r = self.github.post(
+        actions_github = GitHubRepo(
+            user=self.github.user, repo=self.github.repo, token=GH_ACTIONS_TOKEN
+        )
+        r = actions_github.post(
             url="actions/workflows/main.yml/dispatches",
             data={
                 "ref": "main",
@@ -750,6 +753,7 @@ if __name__ == "__main__":
     for name, check in command_to_run.auth:
         if check(pr, comment, args):
             logging.info(f"Passed auth check '{name}', continuing")
+            break
         else:
             logging.info(f"Failed auth check '{name}', quitting")
             # Add a sad face

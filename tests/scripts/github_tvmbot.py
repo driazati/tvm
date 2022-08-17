@@ -35,7 +35,8 @@ CIJob = Dict[str, Any]
 Comment = Dict[str, Any]
 CommentChecker = Callable[[Comment], bool]
 
-EXPECTED_JOBS = ["tvm-ci/pr-head"]
+EXPECTED_JOBS = []
+# EXPECTED_JOBS = ["tvm-ci/pr-head"]
 TVM_BOT_JENKINS_TOKEN = os.environ["TVM_BOT_JENKINS_TOKEN"]
 GH_ACTIONS_TOKEN = os.environ["GH_ACTIONS_TOKEN"]
 JENKINS_URL = "https://ci.tlcpack.ai/"
@@ -279,7 +280,7 @@ class PR:
                     # finished yet
                     status = "PENDING"
                 workflow_name = item["checkSuite"]["workflowRun"]["workflow"]["name"]
-                if workflow_name != "CI":
+                if workflow_name != "CIa":
                     # Ignore all jobs that aren't in the main.yml workflow (these are mostly
                     # automation jobs that run on PRs for tagging / reviews)
                     continue

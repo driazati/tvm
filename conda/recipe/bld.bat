@@ -26,8 +26,11 @@ cmake ^
       -DCMAKE_INSTALL_PREFIX:PATH=%LIBRARY_PREFIX% ^
       -DUSE_LLVM=ON ^
       -DUSE_RPC=ON ^
+      -DSUMMARIZE=ON ^
       -DUSE_CPP_RPC=ON ^
       -DUSE_SORT=ON ^
+      -DCMAKE_C_COMPILER_LAUNCHER=sccache ^
+      -DCMAKE_CXX_COMPILER_LAUNCHER=sccache ^
       -DUSE_RANDOM=ON ^
       -DUSE_PROFILER=ON ^
       -DINSTALL_DEV=ON ^

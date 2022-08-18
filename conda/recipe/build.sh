@@ -16,8 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set -e
-set -u
+set -eux
 
 GPU_OPT=""
 TOOLCHAIN_OPT=""
@@ -52,6 +51,7 @@ cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
       -DUSE_SORT=ON \
       -DUSE_RANDOM=ON \
       -DUSE_PROFILER=ON \
+      -DSUMMARIZE=ON \
       -DUSE_LLVM=ON \
       -DINSTALL_DEV=ON \
       -DUSE_LIBBACKTRACE=AUTO \

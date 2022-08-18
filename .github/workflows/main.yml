@@ -24,10 +24,10 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - main2
   pull_request:
     branches:
-      - main
+      - main2
   workflow_dispatch:
 
 concurrency:
@@ -36,7 +36,7 @@ concurrency:
 
 jobs:
   MacOS:
-    if: ${{ github.repository == 'apache/tvm' }}
+    if: ${{ github.repository == 'driazati/tvm' }}
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,11 +44,29 @@ jobs:
           submodules: 'recursive'
       - name: Set up environment
         uses: ./.github/actions/setup
+      - name: Set up sccache
+        run: |
+          set -eux
+          brew install sccache
       - name: Conda Build
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MACOS_SCCACHE_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MACOS_SCCACHE_AWS_SECRET_ACCESS_KEY }}
+          SCCACHE_BUCKET: tvm-sccache-macos
         shell: bash -l {0}
-        run: >-
-          conda build --output-folder=conda/pkg  conda/recipe &&
+        run: |
+          set -eux
+          sccache --show-stats
+          mkdir build_tools
+          pushd build_tools
+          ln -s $(which sccache) cc
+          ln -s $(which sccache) c++
+          popd
+          export PATH=$(pwd)/build_tools:$PATH
+
+          conda build --output-folder=conda/pkg conda/recipe
           conda install tvm -c ./conda/pkg
+          sccache --show-stats
       - name: Build iOS RPC
         run: |
           IOS_VERSION="14.0"
@@ -87,11 +105,19 @@ jobs:
           submodules: 'recursive'
       - name: Set up environment
         uses: ./.github/actions/setup
+      - name: Install sccache
+        shell: cmd /C call {0}
+        run: >-
+          scoop install sccache
       - name: Conda Build
         shell: cmd /C call {0}
         run: >-
           conda build --output-folder=conda/pkg conda/recipe &&
           conda install tvm -c ./conda/pkg
+      - name: Sccache stats
+        shell: cmd /C call {0}
+        run: >-
+          sccache --show-stats
       - name: Test
         shell: cmd /C call {0}
         run: >-

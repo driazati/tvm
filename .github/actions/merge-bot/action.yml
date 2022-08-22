@@ -1,0 +1,17 @@
+name: 'merge-bot'
+description: 'Merge PRs'
+inputs:
+  required-jobs:
+    description: 'CI jobs that must be present and passing to merge a PR'
+    required: false
+    default: null
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GH_ACTIONS_TOKEN: ${{ secrets.GH_ACTIONS_TOKEN }}
+    TVM_BOT_JENKINS_TOKEN: ${{ secrets.TVM_BOT_JENKINS_TOKEN }}
+    PR_NUMBER: ${{ github.event.issue.number }}
+    ISSUE_COMMENT: ${{ toJson(github.event.comment) }}
+    RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

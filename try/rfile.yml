@@ -1,0 +1,23 @@
+check: |
+  set -eux
+  r run
+  r strip
+  gdb --quiet -ex 'set backtrace limit 5' -ex 'b tvmgen_default_fused_nn_bias_add_compute_' -ex 'r' -ex 'bt' -ex 'q' --args python $(pwd)/run.py
+
+run: |
+  cmake --build ../build
+  r clean
+  python test.py
+
+bgdb: |
+  r run
+  gdb --quiet --args python $(pwd)/test.py
+
+
+strip: |
+  set -eux
+  cd ../build
+  strip libtvm.so libtvm_runtime.so
+
+clean: |
+  rm -f *.so *.o

@@ -126,7 +126,7 @@ class NDArray(NDArrayBase):
         else:
             raise TypeError("type %s not supported" % str(type(value)))
 
-    def copyfrom(self, source_array):
+    def copyfrom(self, source_array, name_hint=None):
         """Perform a synchronous copy from the array.
 
         Parameters
@@ -160,11 +160,10 @@ class NDArray(NDArrayBase):
             dtype = str(t)
 
         if source_array.shape != shape:
-            raise ValueError(
-                "array shape do not match the shape of NDArray {0} vs {1}".format(
-                    source_array.shape, shape
-                )
-            )
+            msg = f"target array shape {shape} does not match the shape of source NDArray: {source_array.shape}"
+            if name_hint:
+                msg = f"for argument '{name_hint}' " + msg
+            raise ValueError(msg)
         numpy_str_map = DataType.NUMPY2STR
         np_dtype_str = (
             numpy_str_map[source_array.dtype]

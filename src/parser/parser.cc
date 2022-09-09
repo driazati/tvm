@@ -755,6 +755,7 @@ class Parser {
           Consume(TokenType::kDefn);
           auto global_tok = Match(TokenType::kGlobal);
           auto global_name = global_tok.ToString();
+          std::cout << "parsing definition " << global_name << "\n";
           auto global = AddOrGet(&global_names, global_name);
           auto func = WithSpan<relay::Function>([&]() { return ParseFunctionDef(); });
           ICHECK(func->span.defined()) << "spans must be set in parser";
@@ -1923,6 +1924,7 @@ IRModule ParseModule(const std::string& file_name, const std::string& file_conte
                      const Optional<IRModule>& init_module, const MetaTable& init_meta_table) {
   VLOG_CONTEXT << "ParseModule";
   VLOG(9) << "parsing and type-checking " << file_name;
+  std::cout << "PARSING " << file_name << " with " << file_content << "\n";
   auto parser = InitParser(file_name, file_content, init_module, init_meta_table);
   auto mod = parser.ParseModule();
   ICHECK(mod.defined()) << "The parser must return a non-null module.";

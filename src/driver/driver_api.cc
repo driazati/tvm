@@ -191,6 +191,7 @@ Array<tvm::transform::Pass> CreatePassList(bool disable_loop_partition) {
   Array<tvm::transform::Pass> pass_list = user_lower_phase0;
 
   // PHASE 1
+  std::cout << "RUNNING DRIVER PASSES\n";
   pass_list.push_back(tir::transform::InjectPrefetch());
   pass_list.push_back(tir::transform::TextureFlatten());
   pass_list.push_back(tir::transform::StorageFlatten(64, instrument_bound_checkers));

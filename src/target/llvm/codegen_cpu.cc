@@ -20,6 +20,7 @@
 /*!
  * \file codegen_cpu.cc
  */
+#include "tvm/ir/function.h"
 #ifdef TVM_LLVM_VERSION
 
 #include "codegen_cpu.h"
@@ -197,6 +198,13 @@ void CodeGenCPU::AddFunction(const PrimFunc& f) {
 
 // Following Glow |DebugInfo::generateFunctionDebugInfo|, https://git.io/fjadv
 void CodeGenCPU::AddDebugInformation(PrimFunc f_tir, llvm::Function* f_llvm) {
+  auto symbol = f_tir->GetAttr<String>(tvm::attr::kGlobalSymbol);
+  std::string sym = symbol.value();
+  std::cout << "Creating debug info for " << sym << "\n";
+  if (sym == "tvmgen_default_fused_nn_bias_add") {
+    // f_llvm->dump();
+  }
+
 #if TVM_LLVM_VERSION >= 50
   ICHECK(!f_llvm->getSubprogram());
   llvm::SmallVector<llvm::Metadata*, 4> paramTys;
@@ -217,6 +225,9 @@ void CodeGenCPU::AddDebugInformation(PrimFunc f_tir, llvm::Function* f_llvm) {
   bool local_to_unit = llvm::GlobalValue::isLocalLinkage(f_llvm->getLinkage());
 
 #if TVM_LLVM_VERSION >= 80
+std::cout << "Creating debug info for file " << dbg_info_->file_ << "\n";
+std::cout << dbg_info_->file_->getFilename().str() << "\n";
+
   auto SPFlags =
       llvm::DISubprogram::toSPFlags(local_to_unit, /*IsDefinition=*/true, /*IsOptimized=*/true);
   auto* DIFunction = dbg_info_->di_builder_->createFunction(

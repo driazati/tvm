@@ -156,6 +156,7 @@ class BuildModule(object):
             is_auto_scheduler_enabled() or is_meta_schedule_enabled() or old_autotvm_silent
         )
 
+        om = mod_name
         mod_name = mangle_module_name(mod_name)
 
         self._build(

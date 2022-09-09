@@ -1,0 +1,307 @@
+ELF Header:
+  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              DYN (Shared object file)
+  Machine:                           Advanced Micro Devices X86-64
+  Version:                           0x1
+  Entry point address:               0x10a0
+  Start of program headers:          64 (bytes into file)
+  Start of section headers:          63304 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               64 (bytes)
+  Size of program headers:           56 (bytes)
+  Number of program headers:         9
+  Size of section headers:           64 (bytes)
+  Number of section headers:         35
+  Section header string table index: 34
+
+Section Headers:
+  [Nr] Name              Type             Address           Offset
+       Size              EntSize          Flags  Link  Info  Align
+  [ 0]                   NULL             0000000000000000  00000000
+       0000000000000000  0000000000000000           0     0     0
+  [ 1] .note.gnu.bu[...] NOTE             0000000000000238  00000238
+       0000000000000024  0000000000000000   A       0     0     4
+  [ 2] .gnu.hash         GNU_HASH         0000000000000260  00000260
+       000000000000005c  0000000000000000   A       3     0     8
+  [ 3] .dynsym           DYNSYM           00000000000002c0  000002c0
+       0000000000000198  0000000000000018   A       4     1     8
+  [ 4] .dynstr           STRTAB           0000000000000458  00000458
+       00000000000001cf  0000000000000000   A       0     0     1
+  [ 5] .rela.dyn         RELA             0000000000000628  00000628
+       00000000000001c8  0000000000000018   A       3     0     8
+  [ 6] .rela.plt         RELA             00000000000007f0  000007f0
+       0000000000000090  0000000000000018  AI       3    20     8
+  [ 7] .init             PROGBITS         0000000000001000  00001000
+       0000000000000017  0000000000000000  AX       0     0     4
+  [ 8] .plt              PROGBITS         0000000000001020  00001020
+       0000000000000070  0000000000000010  AX       0     0     16
+  [ 9] .plt.got          PROGBITS         0000000000001090  00001090
+       0000000000000008  0000000000000008  AX       0     0     8
+  [10] .text             PROGBITS         00000000000010a0  000010a0
+       00000000000045d4  0000000000000000  AX       0     0     16
+  [11] .fini             PROGBITS         0000000000005674  00005674
+       0000000000000009  0000000000000000  AX       0     0     4
+  [12] .rodata           PROGBITS         0000000000006000  00006000
+       000000000000522f  0000000000000000   A       0     0     16
+  [13] .eh_frame_hdr     PROGBITS         000000000000b230  0000b230
+       0000000000000084  0000000000000000   A       0     0     4
+  [14] .eh_frame         PROGBITS         000000000000b2b8  0000b2b8
+       00000000000005b4  0000000000000000   A       0     0     8
+  [15] .init_array       INIT_ARRAY       000000000000cda8  0000bda8
+       0000000000000008  0000000000000008  WA       0     0     8
+  [16] .fini_array       FINI_ARRAY       000000000000cdb0  0000bdb0
+       0000000000000008  0000000000000008  WA       0     0     8
+  [17] .data.rel.ro      PROGBITS         000000000000cdb8  0000bdb8
+       0000000000000090  0000000000000000  WA       0     0     8
+  [18] .dynamic          DYNAMIC          000000000000ce48  0000be48
+       0000000000000180  0000000000000010  WA       4     0     8
+  [19] .got              PROGBITS         000000000000cfc8  0000bfc8
+       0000000000000038  0000000000000008  WA       0     0     8
+  [20] .got.plt          PROGBITS         000000000000d000  0000c000
+       0000000000000048  0000000000000008  WA       0     0     8
+  [21] .data             PROGBITS         000000000000d048  0000c048
+       0000000000000008  0000000000000000  WA       0     0     8
+  [22] .bss              NOBITS           000000000000d050  0000c050
+       0000000000000020  0000000000000000  WA       0     0     8
+  [23] .comment          PROGBITS         0000000000000000  0000c050
+       0000000000000027  0000000000000001  MS       0     0     1
+  [24] .debug_pubnames   PROGBITS         0000000000000000  0000c077
+       0000000000000151  0000000000000000           0     0     1
+  [25] .debug_info       PROGBITS         0000000000000000  0000c1c8
+       00000000000002e8  0000000000000000           0     0     1
+  [26] .debug_abbrev     PROGBITS         0000000000000000  0000c4b0
+       000000000000006c  0000000000000000           0     0     1
+  [27] .debug_line       PROGBITS         0000000000000000  0000c51c
+       0000000000000073  0000000000000000           0     0     1
+  [28] .debug_frame      PROGBITS         0000000000000000  0000c590
+       0000000000000030  0000000000000000           0     0     8
+  [29] .debug_str        PROGBITS         0000000000000000  0000c5c0
+       0000000000000149  0000000000000001  MS       0     0     1
+  [30] .debug_loc        PROGBITS         0000000000000000  0000c709
+       000000000000235e  0000000000000000           0     0     1
+  [31] .debug_pubtypes   PROGBITS         0000000000000000  0000ea67
+       000000000000002e  0000000000000000           0     0     1
+  [32] .symtab           SYMTAB           0000000000000000  0000ea98
+       0000000000000738  0000000000000018          33    61     8
+  [33] .strtab           STRTAB           0000000000000000  0000f1d0
+       000000000000042b  0000000000000000           0     0     1
+  [34] .shstrtab         STRTAB           0000000000000000  0000f5fb
+       000000000000014b  0000000000000000           0     0     1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  l (large), p (processor specific)
+
+There are no section groups in this file.
+
+Program Headers:
+  Type           Offset             VirtAddr           PhysAddr
+                 FileSiz            MemSiz              Flags  Align
+  LOAD           0x0000000000000000 0x0000000000000000 0x0000000000000000
+                 0x0000000000000880 0x0000000000000880  R      0x1000
+  LOAD           0x0000000000001000 0x0000000000001000 0x0000000000001000
+                 0x000000000000467d 0x000000000000467d  R E    0x1000
+  LOAD           0x0000000000006000 0x0000000000006000 0x0000000000006000
+                 0x000000000000586c 0x000000000000586c  R      0x1000
+  LOAD           0x000000000000bda8 0x000000000000cda8 0x000000000000cda8
+                 0x00000000000002a8 0x00000000000002c8  RW     0x1000
+  DYNAMIC        0x000000000000be48 0x000000000000ce48 0x000000000000ce48
+                 0x0000000000000180 0x0000000000000180  RW     0x8
+  NOTE           0x0000000000000238 0x0000000000000238 0x0000000000000238
+                 0x0000000000000024 0x0000000000000024  R      0x4
+  GNU_EH_FRAME   0x000000000000b230 0x000000000000b230 0x000000000000b230
+                 0x0000000000000084 0x0000000000000084  R      0x4
+  GNU_STACK      0x0000000000000000 0x0000000000000000 0x0000000000000000
+                 0x0000000000000000 0x0000000000000000  RW     0x10
+  GNU_RELRO      0x000000000000bda8 0x000000000000cda8 0x000000000000cda8
+                 0x0000000000000258 0x0000000000000258  R      0x1
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .note.gnu.build-id .gnu.hash .dynsym .dynstr .rela.dyn .rela.plt 
+   01     .init .plt .plt.got .text .fini 
+   02     .rodata .eh_frame_hdr .eh_frame 
+   03     .init_array .fini_array .data.rel.ro .dynamic .got .got.plt .data .bss 
+   04     .dynamic 
+   05     .note.gnu.build-id 
+   06     .eh_frame_hdr 
+   07     
+   08     .init_array .fini_array .data.rel.ro .dynamic .got 
+
+Dynamic section at offset 0xbe48 contains 20 entries:
+  Tag        Type                         Name/Value
+ 0x000000000000000c (INIT)               0x1000
+ 0x000000000000000d (FINI)               0x5674
+ 0x0000000000000019 (INIT_ARRAY)         0xcda8
+ 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0xcdb0
+ 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x260
+ 0x0000000000000005 (STRTAB)             0x458
+ 0x0000000000000006 (SYMTAB)             0x2c0
+ 0x000000000000000a (STRSZ)              463 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000003 (PLTGOT)             0xd000
+ 0x0000000000000002 (PLTRELSZ)           144 (bytes)
+ 0x0000000000000014 (PLTREL)             RELA
+ 0x0000000000000017 (JMPREL)             0x7f0
+ 0x0000000000000007 (RELA)               0x628
+ 0x0000000000000008 (RELASZ)             456 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x000000006ffffff9 (RELACOUNT)          12
+ 0x0000000000000000 (NULL)               0x0
+
+Relocation section '.rela.dyn' at offset 0x628 contains 19 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+00000000cda8  000000000008 R_X86_64_RELATIVE                    1150
+00000000cdb0  000000000008 R_X86_64_RELATIVE                    1110
+00000000cdb8  000000000008 R_X86_64_RELATIVE                    b110
+00000000cdc0  000000000008 R_X86_64_RELATIVE                    b118
+00000000cdd8  000000000008 R_X86_64_RELATIVE                    b138
+00000000cde0  000000000008 R_X86_64_RELATIVE                    b140
+00000000ce00  000000000008 R_X86_64_RELATIVE                    cdb8
+00000000ce10  000000000008 R_X86_64_RELATIVE                    cdd8
+00000000ce20  000000000008 R_X86_64_RELATIVE                    b160
+00000000ce30  000000000008 R_X86_64_RELATIVE                    b160
+00000000ce40  000000000008 R_X86_64_RELATIVE                    b160
+00000000d048  000000000008 R_X86_64_RELATIVE                    d048
+00000000cfc8  000500000006 R_X86_64_GLOB_DAT 000000000000d068 __TVMBackendFreeW[...] + 0
+00000000cfd0  000100000006 R_X86_64_GLOB_DAT 0000000000000000 __cxa_finalize + 0
+00000000cfd8  000d00000006 R_X86_64_GLOB_DAT 000000000000d060 __TVMBackendAlloc[...] + 0
+00000000cfe0  000200000006 R_X86_64_GLOB_DAT 0000000000000000 _ITM_registerTMCl[...] + 0
+00000000cfe8  000300000006 R_X86_64_GLOB_DAT 0000000000000000 _ITM_deregisterTM[...] + 0
+00000000cff0  000900000006 R_X86_64_GLOB_DAT 000000000000d058 __TVMAPISetLastError + 0
+00000000cff8  000400000006 R_X86_64_GLOB_DAT 0000000000000000 __gmon_start__ + 0
+
+Relocation section '.rela.plt' at offset 0x7f0 contains 6 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+00000000d018  000c00000007 R_X86_64_JUMP_SLO 0000000000002240 tvmgen_default_fu[...] + 0
+00000000d020  000e00000007 R_X86_64_JUMP_SLO 0000000000002de0 tvmgen_default_fu[...] + 0
+00000000d028  000a00000007 R_X86_64_JUMP_SLO 0000000000001ab0 tvmgen_default_fu[...] + 0
+00000000d030  000800000007 R_X86_64_JUMP_SLO 0000000000001e60 tvmgen_default_fu[...] + 0
+00000000d038  000f00000007 R_X86_64_JUMP_SLO 0000000000002a00 tvmgen_default_fu[...] + 0
+00000000d040  001000000007 R_X86_64_JUMP_SLO 0000000000002620 tvmgen_default_fu[...] + 0
+
+The decoding of unwind sections for machine type Advanced Micro Devices X86-64 is not currently supported.
+
+Symbol table '.dynsym' contains 17 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __cxa_finalize
+     2: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMC[...]
+     3: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterT[...]
+     4: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__
+     5: 000000000000d068     8 OBJECT  WEAK   DEFAULT   22 __TVMBackendFree[...]
+     6: 0000000000001160  2378 FUNC    GLOBAL DEFAULT   10 tvmgen_default__[...]
+     7: 0000000000005660    20 FUNC    GLOBAL DEFAULT   10 get_c_metadata
+     8: 0000000000001e60   991 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+     9: 000000000000d058     8 OBJECT  WEAK   DEFAULT   22 __TVMAPISetLastError
+    10: 0000000000001ab0   944 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    11: 000000000000b16f   192 OBJECT  GLOBAL DEFAULT   12 __tvm_dev_mblob
+    12: 0000000000002240   991 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    13: 000000000000d060     8 OBJECT  WEAK   DEFAULT   22 __TVMBackendAllo[...]
+    14: 0000000000002de0   947 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    15: 0000000000002a00   992 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    16: 0000000000002620   991 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+
+Symbol table '.symtab' contains 77 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000238     0 SECTION LOCAL  DEFAULT    1 
+     2: 0000000000000260     0 SECTION LOCAL  DEFAULT    2 
+     3: 00000000000002c0     0 SECTION LOCAL  DEFAULT    3 
+     4: 0000000000000458     0 SECTION LOCAL  DEFAULT    4 
+     5: 0000000000000628     0 SECTION LOCAL  DEFAULT    5 
+     6: 00000000000007f0     0 SECTION LOCAL  DEFAULT    6 
+     7: 0000000000001000     0 SECTION LOCAL  DEFAULT    7 
+     8: 0000000000001020     0 SECTION LOCAL  DEFAULT    8 
+     9: 0000000000001090     0 SECTION LOCAL  DEFAULT    9 
+    10: 00000000000010a0     0 SECTION LOCAL  DEFAULT   10 
+    11: 0000000000005674     0 SECTION LOCAL  DEFAULT   11 
+    12: 0000000000006000     0 SECTION LOCAL  DEFAULT   12 
+    13: 000000000000b230     0 SECTION LOCAL  DEFAULT   13 
+    14: 000000000000b2b8     0 SECTION LOCAL  DEFAULT   14 
+    15: 000000000000cda8     0 SECTION LOCAL  DEFAULT   15 
+    16: 000000000000cdb0     0 SECTION LOCAL  DEFAULT   16 
+    17: 000000000000cdb8     0 SECTION LOCAL  DEFAULT   17 
+    18: 000000000000ce48     0 SECTION LOCAL  DEFAULT   18 
+    19: 000000000000cfc8     0 SECTION LOCAL  DEFAULT   19 
+    20: 000000000000d000     0 SECTION LOCAL  DEFAULT   20 
+    21: 000000000000d048     0 SECTION LOCAL  DEFAULT   21 
+    22: 000000000000d050     0 SECTION LOCAL  DEFAULT   22 
+    23: 0000000000000000     0 SECTION LOCAL  DEFAULT   23 
+    24: 0000000000000000     0 SECTION LOCAL  DEFAULT   24 
+    25: 0000000000000000     0 SECTION LOCAL  DEFAULT   25 
+    26: 0000000000000000     0 SECTION LOCAL  DEFAULT   26 
+    27: 0000000000000000     0 SECTION LOCAL  DEFAULT   27 
+    28: 0000000000000000     0 SECTION LOCAL  DEFAULT   28 
+    29: 0000000000000000     0 SECTION LOCAL  DEFAULT   29 
+    30: 0000000000000000     0 SECTION LOCAL  DEFAULT   30 
+    31: 0000000000000000     0 SECTION LOCAL  DEFAULT   31 
+    32: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c
+    33: 00000000000010a0     0 FUNC    LOCAL  DEFAULT   10 deregister_tm_clones
+    34: 00000000000010d0     0 FUNC    LOCAL  DEFAULT   10 register_tm_clones
+    35: 0000000000001110     0 FUNC    LOCAL  DEFAULT   10 __do_global_dtors_aux
+    36: 000000000000d050     1 OBJECT  LOCAL  DEFAULT   22 completed.0
+    37: 000000000000cdb0     0 OBJECT  LOCAL  DEFAULT   16 __do_global_dtor[...]
+    38: 0000000000001150     0 FUNC    LOCAL  DEFAULT   10 frame_dummy
+    39: 000000000000cda8     0 OBJECT  LOCAL  DEFAULT   15 __frame_dummy_in[...]
+    40: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS TVMMod
+    41: 00000000000031a0  1221 FUNC    LOCAL  DEFAULT   10 tvmgen_default_f[...]
+    42: 0000000000003950  2010 FUNC    LOCAL  DEFAULT   10 tvmgen_default_f[...]
+    43: 0000000000005330   814 FUNC    LOCAL  DEFAULT   10 tvmgen_default_f[...]
+    44: 0000000000004130  3906 FUNC    LOCAL  DEFAULT   10 tvmgen_default_f[...]
+    45: 0000000000005080   685 FUNC    LOCAL  DEFAULT   10 tvmgen_default_f[...]
+    46: 0000000000003670   731 FUNC    LOCAL  DEFAULT   10 tvmgen_default_f[...]
+    47: 0000000000009e20   225 OBJECT  LOCAL  DEFAULT   12 fused_constant_1
+    48: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS TVMMetadataMod
+    49: 000000000000cdf8    80 OBJECT  LOCAL  DEFAULT   17 __unnamed_1
+    50: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS devc
+    51: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c
+    52: 000000000000b868     0 OBJECT  LOCAL  DEFAULT   14 __FRAME_END__
+    53: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS 
+    54: 000000000000ce48     0 OBJECT  LOCAL  DEFAULT   18 _DYNAMIC
+    55: 000000000000d050     0 OBJECT  LOCAL  DEFAULT   21 __TMC_END__
+    56: 000000000000d048     0 OBJECT  LOCAL  DEFAULT   21 __dso_handle
+    57: 0000000000001000     0 FUNC    LOCAL  DEFAULT    7 _init
+    58: 000000000000b230     0 NOTYPE  LOCAL  DEFAULT   13 __GNU_EH_FRAME_HDR
+    59: 0000000000005674     0 FUNC    LOCAL  DEFAULT   11 _fini
+    60: 000000000000d000     0 OBJECT  LOCAL  DEFAULT   20 _GLOBAL_OFFSET_TABLE_
+    61: 000000000000d068     8 OBJECT  WEAK   DEFAULT   22 __TVMBackendFree[...]
+    62: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __cxa_finalize
+    63: 0000000000002240   991 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    64: 000000000000d060     8 OBJECT  WEAK   DEFAULT   22 __TVMBackendAllo[...]
+    65: 0000000000002de0   947 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    66: 0000000000001160  2378 FUNC    GLOBAL DEFAULT   10 tvmgen_default__[...]
+    67: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMC[...]
+    68: 0000000000001ab0   944 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    69: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterT[...]
+    70: 0000000000005660    20 FUNC    GLOBAL DEFAULT   10 get_c_metadata
+    71: 000000000000b16f   192 OBJECT  GLOBAL DEFAULT   12 __tvm_dev_mblob
+    72: 0000000000001e60   991 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    73: 0000000000002a00   992 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+    74: 000000000000d058     8 OBJECT  WEAK   DEFAULT   22 __TVMAPISetLastError
+    75: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__
+    76: 0000000000002620   991 FUNC    GLOBAL DEFAULT   10 tvmgen_default_f[...]
+
+Histogram for `.gnu.hash' bucket list length (total of 3 buckets):
+ Length  Number     % of total  Coverage
+      0  0          (  0.0%)
+      1  0          (  0.0%)      0.0%
+      2  1          ( 33.3%)     16.7%
+      3  0          (  0.0%)     16.7%
+      4  0          (  0.0%)     16.7%
+      5  2          ( 66.7%)    100.0%
+
+No version information found in this file.
+
+Displaying notes found in: .note.gnu.build-id
+  Owner                Data size 	Description
+  GNU                  0x00000014	NT_GNU_BUILD_ID (unique build ID bitstring)
+    Build ID: 9793c63d1f02f673c1b9ae94eb19a7d4d36b281f

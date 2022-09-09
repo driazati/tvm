@@ -553,7 +553,10 @@ llvm::GlobalVariable* CodeGenLLVM::AllocateSharedMemory(DataType dtype, size_t s
   return global;
 }
 
+
 std::unique_ptr<CodeGenLLVM::DebugInfo> CodeGenLLVM::CreateDebugInfo(llvm::Module* module) {
+  std::cout << "MAKING DEBUG INFO for module" << module << "\n";
+  module->dump();
 #if TVM_LLVM_VERSION >= 100
   auto debug_info = std::make_unique<CodeGenLLVM::DebugInfo>();
   debug_info->di_builder_ = std::make_unique<llvm::DIBuilder>(*module);

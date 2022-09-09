@@ -86,7 +86,7 @@ class AotModule(object):
             v = self._get_input(key)
             if v is None:
                 raise RuntimeError("Could not find '%s' in model's inputs" % key)
-            v.copyfrom(value)
+            v.copyfrom(value, name_hint=key)
 
         if params:
             # upload big arrays first to avoid memory issue in rpc mode
@@ -98,7 +98,7 @@ class AotModule(object):
                 # params from set_input
                 val = self._get_input(k)
                 if val:
-                    self._get_input(k).copyfrom(params[k])
+                    self._get_input(k).copyfrom(params[k], name_hint=k)
 
     def run(self, **input_dict):
         """Run forward execution of the model

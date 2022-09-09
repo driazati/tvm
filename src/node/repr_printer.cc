@@ -32,6 +32,7 @@ void ReprPrinter::Print(const ObjectRef& node) {
     stream << "(nullptr)";
   } else {
     if (f.can_dispatch(node)) {
+      // std::cout << "REPROPRINTER";
       f(node, this);
     } else {
       // default value, output type key and addr.

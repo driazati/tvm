@@ -150,6 +150,10 @@ TVM_REGISTER_GLOBAL("runtime.MapGetItem").set_body([](TVMArgs args, TVMRetValue*
   auto* n = static_cast<const MapNode*>(ptr);
   auto it = n->find(String::CanConvertFrom(args[1]) ? args[1].operator String()
                                                     : args[1].operator ObjectRef());
+std::cout << "MAP HAS " << n->size() << " items\n";                                                
+  for (const auto& x : *n) {
+    std::cout << "KEY[" << (x.first->GetTypeKey()) << "] = [" << x.second->GetTypeKey() << "]" << std::endl;
+  }
   ICHECK(it != n->end()) << "cannot find the corresponding key in the Map";
   *ret = (*it).second;
 });

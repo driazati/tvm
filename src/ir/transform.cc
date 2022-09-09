@@ -439,18 +439,25 @@ Pass GetPass(const String& pass_name) {
 // a Sequential without the consideration of their orders. The phase
 // ordering problem needs to be handled in the future.
 IRModule SequentialNode::operator()(IRModule mod, const PassContext& pass_ctx) const {
+  int i = 0;
   for (const Pass& pass : passes) {
+    std::cout << "running pass " << i++ << "\n";
     ICHECK(pass.defined()) << "Found undefined pass for optimization.";
     const PassInfo& pass_info = pass->Info();
     if (!pass_ctx.PassEnabled(pass_info)) {
-      VLOG(0) << "skipping disabled pass '" << pass_info->name << "'";
+      std::cout << "skipping disabled pass '" << pass_info->name << "'\n";
       continue;
     }
+    std::cout << "running '" << pass_info->name << "'\n";
     // resolve dependencies
     for (const auto& it : pass_info->required) {
       mod = GetPass(it)(std::move(mod), pass_ctx);
+      std::cout << "after " << it << "\n";
+      std::cout << mod << "\n";
     }
     mod = pass(std::move(mod), pass_ctx);
+    std::cout << "after pass\n";
+    std::cout << mod << "\n";
   }
   return mod;
 }

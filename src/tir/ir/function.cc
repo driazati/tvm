@@ -110,7 +110,7 @@ TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<PrimFuncNode>([](const ObjectRef& ref, ReprPrinter* p) {
       // TODO(tvm-team) redirect to Text printer once we have a good text format.
       auto* node = static_cast<const PrimFuncNode*>(ref.get());
-      p->stream << "PrimFunc(" << node->params << ") ";
+      p->stream << "Pri2mFunc(" << node->params << ") ";
       if (node->attrs.defined()) {
         p->stream << "attrs=" << node->attrs;
       }

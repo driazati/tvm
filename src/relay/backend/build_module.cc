@@ -325,14 +325,18 @@ class RelayBuildModule : public runtime::ModuleNode {
   IRModule OptimizeImpl(IRModule relay_module) {
     ICHECK(relay_module.defined()) << "The IRModule must be defined for the Relay compiler.";
 
+    std::cout << "PARTWAY1\n";
+    std::cout << relay_module << "\n";
     backend::BindParamsInModule(relay_module, params_);
-
+    std::cout << "After BIND PARAMS\n";
+    std::cout << relay_module << "\n";
     Array<Pass> pass_seqs =
         GetPassPrefix(/*is_homogenous=*/config_->primitive_targets.size() == 1, /*is_vm=*/false);
     transform::PassContext pass_ctx = PassContext::Current();
 
     if (config_->optional_homogeneous_target.defined()) {
       // This pass currently only supports the homogeneous case.
+      std::cout << "HOMOGENEOUS\n";
       pass_seqs.push_back(transform::SplitArgs(
           config_->optional_homogeneous_target->GetAttr<Integer>("max_function_args", -1)
               .value()
@@ -348,13 +352,17 @@ class RelayBuildModule : public runtime::ModuleNode {
 
     // Create a sequential pass and perform optimizations.
     transform::Pass seq = transform::Sequential(pass_seqs);
+      std::cout << "BEFORESEQ\n";
+    std::cout << relay_module << "\n";
     if (config_->optional_homogeneous_target.defined()) {
       With<Target> tctx(config_->optional_homogeneous_target);
       relay_module = seq(relay_module);
     } else {
       relay_module = seq(relay_module);
     }
-
+    std::cout << "PARTWAY2\n";
+    std::cout << relay_module << "\n";
+    // exit(0);
     // Do layout rewrite for auto-scheduler.
     if (backend::IsAutoSchedulerEnabled() && config_->optional_homogeneous_target.defined()) {
       Pass major_pass = transform::AutoSchedulerLayoutRewrite();
@@ -384,7 +392,9 @@ class RelayBuildModule : public runtime::ModuleNode {
         relay_module = transform::FuseOps()(relay_module);
       }
     }
-
+    // no spans here
+    // std::cout << "PARTWAY\n";
+    // std::cout << relay_module << "\n";
     relay_module = transform::InferType()(relay_module);
 
     // Inline the functions that have been lifted by the module scope.
@@ -397,6 +407,7 @@ class RelayBuildModule : public runtime::ModuleNode {
     relay_module = transform::InferType()(relay_module);
     relay_module = transform::LabelOps()(relay_module);
     relay_module = transform::AnnotateMemoryScope(config_)(relay_module);
+
 
     ICHECK(relay_module.defined());
 
@@ -411,9 +422,23 @@ class RelayBuildModule : public runtime::ModuleNode {
    */
   void BuildRelay(IRModule relay_module, const String& mod_name) {
     // Relay IRModule -> IRModule optimizations.
+    std::cout << "RELAYMODULE BEFORE\n";
+    for (const auto& func : relay_module->functions) {
+      std::cout << "FUNC " << func.first << "\n";
+      std::cout << func.second << "\n";
+    }
     IRModule module = WithAttrs(
         relay_module, {{tvm::attr::kExecutor, executor_}, {tvm::attr::kRuntime, runtime_}});
     relay_module = OptimizeImpl(std::move(module));
+    std::cout << "RELAYMODULE AFTER\n";
+    for (const auto& func : relay_module->functions) {
+      std::cout << "FUNC " << typeid(func.second).name() << " " << func.first << "\n";
+      std::cout << func.second << "\n";
+      // std::cout << func.second
+    }
+    // transform::Pass seq = transform::Sequential({transform::PlanDevices(config_)});
+    // relay_module = seq(relay_module);
+    // exit(0);
 
     // Get the updated function and new IRModule to build.
     // Instead of recreating the IRModule, we should look at the differences between this and the
@@ -455,6 +480,7 @@ class RelayBuildModule : public runtime::ModuleNode {
         ret_.mod = tvm::codegen::CSourceModuleCreate(";", "", Array<String>{});
       }
     } else {
+      // code goes here
       ret_.mod = tvm::TIRToRuntime(lowered_funcs, host_target);
     }
 

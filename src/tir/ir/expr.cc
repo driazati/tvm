@@ -1122,7 +1122,7 @@ TVM_REGISTER_NODE_TYPE(BufferLoadNode);
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<BufferLoadNode>([](const ObjectRef& node, ReprPrinter* p) {
       auto* op = static_cast<const BufferLoadNode*>(node.get());
-      p->stream << op->buffer->name << "[";
+      p->stream << "BEFORE" << op->buffer->name << "AFTER[";
       for (size_t i = 0; i < op->indices.size(); ++i) {
         p->Print(op->indices[i]);
         if (i < op->indices.size() - 1) {

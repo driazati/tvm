@@ -16,8 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set -e
-set -u
+set -eux
 
 GPU_OPT=""
 TOOLCHAIN_OPT=""
@@ -42,10 +41,10 @@ fi
 # remove touched cmake config
 rm -f config.cmake
 rm -rf build || true
-mkdir -p build
-cd build
+# mkdir -p build
+# cd build
 
-cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+python3 tests/scripts/task_build.py --sccache-bucket tvm-sccache-macos -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
       -DCMAKE_BUILD_TYPE=Release \
       -DUSE_RPC=ON \
       -DUSE_CPP_RPC=OFF \
@@ -55,8 +54,8 @@ cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
       -DUSE_LLVM=ON \
       -DINSTALL_DEV=ON \
       -DUSE_LIBBACKTRACE=AUTO \
-      ${GPU_OPT} ${TOOLCHAIN_OPT} ${MACOS_OPT} \
-      ${SRC_DIR}
+      "${GPU_OPT}" "${TOOLCHAIN_OPT}" "${MACOS_OPT}" \
+      "${SRC_DIR}"
 
-make -j${CPU_COUNT} VERBOSE=1
-cd ..
+# make -j${CPU_COUNT} VERBOSE=1
+# cd ..

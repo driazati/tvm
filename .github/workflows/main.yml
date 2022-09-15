@@ -45,6 +45,9 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/setup
       - name: Conda Build
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MACOS_SCCACHE_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MACOS_SCCACHE_AWS_SECRET_ACCESS_KEY }}
         shell: bash -l {0}
         run: >-
           conda build --output-folder=conda/pkg  conda/recipe &&

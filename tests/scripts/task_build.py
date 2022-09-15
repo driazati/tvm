@@ -20,6 +20,7 @@ import shutil
 import os
 import logging
 import sys
+import shlex
 import multiprocessing
 
 from pathlib import Path
@@ -33,11 +34,13 @@ from cmd_utils import Sh, init_log, REPO_ROOT
 if __name__ == "__main__":
     init_log()
 
-    parser = argparse.ArgumentParser(description="List pytest nodeids for a folder")
+    parser = argparse.ArgumentParser(
+        description="Build TVM in CI (all unknown args are passed to CMake)"
+    )
     parser.add_argument("--sccache-bucket", required=False, help="sccache bucket name")
     parser.add_argument("--build-dir", default="build", help="build folder")
     parser.add_argument("--cmake-target", help="optional build target")
-    args = parser.parse_args()
+    args, other = parser.parse_known_args()
 
     env = {"VTA_HW_PATH": str(Path(os.getcwd()) / "3rdparty" / "vta-hw")}
     sccache_exe = shutil.which("sccache")
@@ -49,6 +52,7 @@ if __name__ == "__main__":
     if use_sccache:
         if args.sccache_bucket:
             env["SCCACHE_BUCKET"] = args.sccache_bucket
+            env["SCCACHE_REGION"] = "us-west-2"
             logging.info(f"Using sccache bucket: {args.sccache_bucket}")
         else:
             logging.info(f"No sccache bucket set, using local cache")
@@ -76,7 +80,10 @@ if __name__ == "__main__":
     available_cpus = nproc // executors
     num_cpus = max(available_cpus, 1)
 
-    sh.run("cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..", cwd=build_dir)
+    command = ["cmake", "-GNinja", "-DCMAKE_BUILD_TYPE=RelWithDebInfo"]
+    command += other
+    command.append("..")
+    sh.run(" ".join([shlex.quote(arg) for arg in command]), cwd=build_dir)
 
     target = ""
     if args.cmake_target:

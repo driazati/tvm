@@ -32,6 +32,9 @@ source:
 build:
   number: 0
   include_recipe: False
+  script_env:
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
   missing_dso_whitelist:
     - "*libcuda.*"  # [linux]
 

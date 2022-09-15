@@ -23,8 +23,8 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
   pull_request:
     branches:
       - main
@@ -36,7 +36,7 @@ concurrency:
 
 jobs:
   MacOS:
-    if: ${{ github.repository == 'apache/tvm' }}
+    if: ${{ github.repository == 'driazati/tvm' }}
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,6 +44,11 @@ jobs:
           submodules: 'recursive'
       - name: Set up environment
         uses: ./.github/actions/setup
+      - name: Set up Sccache
+        run: |
+          set -eux
+          brew install sccache
+          python3 -m pip install ninja
       - name: Conda Build
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.MACOS_SCCACHE_AWS_ACCESS_KEY_ID }}

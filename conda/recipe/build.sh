@@ -43,8 +43,13 @@ rm -f config.cmake
 rm -rf build || true
 # mkdir -p build
 # cd build
+mkdir ~/.sccache
+ln -s "$(which sccache)" ~/.sccache/cc
+ln -s "$(which sccache)" ~/.sccache/c++
 
-python3 tests/scripts/task_build.py --sccache-bucket tvm-sccache-macos -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+python3 tests/scripts/task_build.py --cc ~/.sccache/cc --c++ ~/.sccache/c++ \
+      --sccache-bucket tvm-sccache-macos \
+      -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
       -DCMAKE_BUILD_TYPE=Release \
       -DUSE_RPC=ON \
       -DUSE_CPP_RPC=OFF \

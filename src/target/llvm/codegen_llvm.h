@@ -465,6 +465,7 @@ class CodeGenLLVM : public ExprFunctor<llvm::Value*(const PrimExpr&)>,
 
   // The IRBuilder.
   using IRBuilder = llvm::IRBuilder<llvm::ConstantFolder, llvm::IRBuilderDefaultInserter>;
+
   // The current function
   llvm::Function* function_;
   // Internal builder
@@ -521,6 +522,70 @@ class CodeGenLLVM : public ExprFunctor<llvm::Value*(const PrimExpr&)>,
   const Op& builtin_call_llvm_pure_intrin_ = builtin::call_llvm_pure_intrin();
   const Op& builtin_lookup_param_ = builtin::lookup_param();
   const Op& builtin_tvm_call_cpacked_lowered_ = builtin::tvm_call_cpacked_lowered();
+
+  llvm::Instruction* StashInst(llvm::Instruction* instruction, const StmtNode* op);
+
+  llvm::Value* StashInst(llvm::Value* value, const StmtNode* op) {
+    if (llvm::Instruction* instruction = llvm::dyn_cast<llvm::Instruction>(value)) {
+      StashInst(instruction, op == nullptr ? Span() : op->span);
+    }
+    return value;
+    // return Insert(I, Name);
+  }
+
+  llvm::Value* StashInst(llvm::Value* value, const PrimExprNode* op) {
+    if (llvm::Instruction* instruction = llvm::dyn_cast<llvm::Instruction>(value)) {
+      StashInst(instruction, op == nullptr ? Span() : op->span);
+    }
+    return value;
+    // return Insert(I, Name);
+  }
+
+  llvm::Value* StashInst(llvm::Value* value, const Span& span) {
+    if (llvm::Instruction* instruction = llvm::dyn_cast<llvm::Instruction>(value)) {
+      StashInst(instruction, span);
+      // if (span.defined()) {
+      //   instruction_lines_[I] = std::make_tuple(span->line, span->column);
+      // } else {
+      //   instruction_lines_[I] = std::make_tuple(200, 1234);
+      // }
+    }
+    return value;
+  }
+
+  template <typename InstType>
+  InstType* StashInst(InstType* instruction, const StmtNode* op) {
+    return StashInst(instruction, op == nullptr ? Span() : op->span);
+  }
+
+  template <typename InstType>
+  InstType* StashInst(InstType* instruction, const PrimExprNode* op) {
+    return StashInst(instruction, op == nullptr ? Span() : op->span);
+    // if (op == nullptr) {
+    //   instruction_lines_[instruction] = std::make_tuple(98, 1234);
+    // } else {
+    //   return StashInst(instruction, op->span);
+    //   // if (op->span.defined()) {
+    //   //   instruction_lines_[instruction] = std::make_tuple(op->span->line, op->span->column);
+    //   // } else {
+    //   //   std::cerr << "Missing span for " << op << " on ";
+    //   //   instruction->dump();
+    //   //   instruction_lines_[instruction] = std::make_tuple(198, 1234);
+    //   // }
+    // }
+    // return instruction;
+  }
+
+  template <typename InstType>
+  InstType* StashInst(InstType* instruction, const Span& span) {
+    if (span.get() && span.defined()) {
+      instruction_lines_[instruction] = std::make_tuple(span->line, span->column);
+    } else {
+      instruction_lines_[instruction] = std::make_tuple(198, 1234);
+    }
+    return instruction;
+  }
+  std::unordered_map<llvm::Instruction*, std::tuple<int, int>> instruction_lines_;
 
   /*! \brief Helper struct for debug infos. */
   struct DebugInfo {

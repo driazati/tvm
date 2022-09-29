@@ -250,9 +250,9 @@ void CodeGenLLVM::AddFunctionInternal(const PrimFunc& f, bool ret_void) {
 #endif
 
   if (ret_void) {
-    builder_->CreateRetVoid();
+    StashInst(builder_->CreateRetVoid(), f->span);
   } else {
-    builder_->CreateRet(ConstInt32(0));
+    StashInst(builder_->CreateRet(ConstInt32(0)), f->span);
   }
 }
 
@@ -554,6 +554,7 @@ llvm::GlobalVariable* CodeGenLLVM::AllocateSharedMemory(DataType dtype, size_t s
 }
 
 std::unique_ptr<CodeGenLLVM::DebugInfo> CodeGenLLVM::CreateDebugInfo(llvm::Module* module) {
+  std::cout << "Creating debug info\n";
 #if TVM_LLVM_VERSION >= 100
   auto debug_info = std::make_unique<CodeGenLLVM::DebugInfo>();
   debug_info->di_builder_ = std::make_unique<llvm::DIBuilder>(*module);
@@ -562,12 +563,18 @@ std::unique_ptr<CodeGenLLVM::DebugInfo> CodeGenLLVM::CreateDebugInfo(llvm::Modul
   debug_info->di_builder_ = llvm::make_unique<llvm::DIBuilder>(*module);
 #endif
   // TODO(tulloch): pass this information through relay::Span classes to the IRModule instance?
-  debug_info->file_ = debug_info->di_builder_->createFile("model.tvm", "/tmp/");
+  debug_info->file_ = debug_info->di_builder_->createFile("main.tir", ".");
+  // debug_info->compilation_unit_ = debug_info->di_builder_->createCompileUnit(
+  //     llvm::dwarf::DW_LANG_C, debug_info->file_, "TVM", false, "", 0, "",
+  //     llvm::DICompileUnit::DebugEmissionKind::FullDebug,
+  //     /* SplitDebugInlining */ true,
+  //     /* DebugInfoForProfiling */ true);
+  const int runtime_version = 0;
+  const bool is_optimized = false;
+  const char* compiler_flags = "";
   debug_info->compilation_unit_ = debug_info->di_builder_->createCompileUnit(
-      llvm::dwarf::DW_LANG_C, debug_info->file_, "TVM", 0, "", 0, "",
-      llvm::DICompileUnit::DebugEmissionKind::FullDebug,
-      /* SplitDebugInlining */ true,
-      /* DebugInfoForProfiling */ true);
+      /*Lang=*/llvm::dwarf::DW_LANG_C, /*File=*/debug_info->file_, /*Producer=*/"TVM", is_optimized,
+      compiler_flags, runtime_version);
   return debug_info;
 }
 
@@ -694,21 +701,21 @@ void CodeGenLLVM::CreateSerialFor(llvm::Value* begin, llvm::Value* end, llvm::Va
   auto* for_begin = llvm::BasicBlock::Create(*ctx, "for_begin_" + loop_var_name, function_);
   auto* for_body = llvm::BasicBlock::Create(*ctx, "for_body_" + loop_var_name, function_);
   auto* for_end = llvm::BasicBlock::Create(*ctx, "for_end_" + loop_var_name, function_);
-  builder_->CreateBr(for_begin);
+  StashInst(builder_->CreateBr(for_begin), body->span);
   builder_->SetInsertPoint(for_begin);
   llvm::PHINode* loop_value = builder_->CreatePHI(begin->getType(), 2);
   loop_value->setName(loop_var->name_hint.c_str());
   loop_value->addIncoming(begin, pre_block);
   ICHECK(!var_map_.count(loop_var.get()));
   var_map_[loop_var.get()] = loop_value;
-  builder_->CreateCondBr(CreateLT(loop_var.dtype(), loop_value, end), for_body, for_end,
-                         md_very_likely_branch_);
+  auto lt = StashInst(CreateLT(loop_var.dtype(), loop_value, end), body->span);
+  StashInst(builder_->CreateCondBr(lt, for_body, for_end, md_very_likely_branch_), body->span);
   builder_->SetInsertPoint(for_body);
   this->VisitStmt(body);
   var_map_.erase(loop_var.get());
   llvm::Value* loop_next = CreateAdd(loop_var.dtype(), loop_value, stride);
   loop_value->addIncoming(loop_next, builder_->GetInsertBlock());
-  builder_->CreateBr(for_begin);
+  StashInst(builder_->CreateBr(for_begin), body->span);
   builder_->SetInsertPoint(for_end);
 }
 
@@ -724,7 +731,7 @@ llvm::Value* CodeGenLLVM::CreateCast(DataType from, DataType to, llvm::Value* va
       return builder_->CreateFCmpONE(value, zero);
     } else {
       llvm::Constant* zero = llvm::ConstantInt::get(DTypeToLLVMType(from), 0);
-      return builder_->CreateICmpNE(value, zero);
+      return StashInst(builder_->CreateICmpNE(value, zero), (PrimExprNode*)nullptr);
     }
   } else if (!from.is_float() && !to.is_float()) {
     return builder_->CreateIntCast(value, target, from.is_int());
@@ -798,7 +805,8 @@ CodeGenLLVM::TypedPointer CodeGenLLVM::CreateBufferPtr(llvm::Value* buffer_ptr,
       << "DType " << buffer_element_dtype
       << " has padding for alignment.  TVM data arrays are expected to be densely packed, with no "
          "padding for alignment.";
-  llvm::Value* value_ptr = builder_->CreateInBoundsGEP(element_type, buffer_ptr, index);
+  llvm::Value* value_ptr = StashInst(builder_->CreateInBoundsGEP(element_type, buffer_ptr, index),
+                                     (PrimExprNode*)nullptr);
 
   if (element_ptr_type != value_ptr_type) {
     value_ptr = builder_->CreatePointerCast(value_ptr, value_ptr_type);
@@ -834,14 +842,14 @@ void CodeGenLLVM::CreatePrintf(const std::string& format,
 
   std::vector<llvm::Value*> printf_args = {str};
   printf_args.insert(printf_args.end(), format_args.begin(), format_args.end());
-  builder_->CreateCall(func_printf, printf_args);
+  StashInst(builder_->CreateCall(func_printf, printf_args), (PrimExprNode*)nullptr);
 
   // Call fflush() immediately, as this utility is intended for debug
   // purposes.  A segfault occurring within the generated LLVM code
   // would otherwise leave the stdout buffer unflushed.
   llvm::Value* null_stream = llvm::ConstantPointerNull::get(t_void_p_);
   null_stream->setName("null_stream");
-  builder_->CreateCall(func_fflush, {null_stream});
+  StashInst(builder_->CreateCall(func_fflush, {null_stream}), (PrimExprNode*)nullptr);
 }
 
 llvm::Value* CodeGenLLVM::CreateLookupReturnAddress(unsigned int level) {
@@ -868,7 +876,7 @@ llvm::Value* CodeGenLLVM::CreateCallExtern(Type ret_type, String global_symbol,
     f = llvm::Function::Create(ftype, llvm::Function::ExternalLinkage, MakeStringRef(global_symbol),
                                module_.get());
   }
-  llvm::CallInst* call = builder_->CreateCall(f, arg_value);
+  llvm::CallInst* call = StashInst(builder_->CreateCall(f, arg_value), (PrimExprNode*)nullptr);
   return call;
 }
 
@@ -978,25 +986,25 @@ llvm::Value* CodeGenLLVM::CreateIntrinsic(const CallNode* op) {
 #else
               << llvm::Intrinsic::getName(id, {});
 #endif
-    return builder_->CreateCall(f, arg_value);
+    return StashInst(builder_->CreateCall(f, arg_value), op);
   } else if (op->op.same_as(builtin::bitwise_and())) {
-    return builder_->CreateAnd(MakeValue(op->args[0]), MakeValue(op->args[1]));
+    return StashInst(builder_->CreateAnd(MakeValue(op->args[0]), MakeValue(op->args[1])), op);
   } else if (op->op.same_as(builtin::bitwise_or())) {
-    return builder_->CreateOr(MakeValue(op->args[0]), MakeValue(op->args[1]));
+    return StashInst(builder_->CreateOr(MakeValue(op->args[0]), MakeValue(op->args[1])), op);
   } else if (op->op.same_as(builtin::bitwise_not())) {
-    return builder_->CreateNot(MakeValue(op->args[0]));
+    return StashInst(builder_->CreateNot(MakeValue(op->args[0])), op);
   } else if (op->op.same_as(builtin::bitwise_xor())) {
-    return builder_->CreateXor(MakeValue(op->args[0]), MakeValue(op->args[1]));
+    return StashInst(builder_->CreateXor(MakeValue(op->args[0]), MakeValue(op->args[1])), op);
   } else if (op->op.same_as(builtin::shift_left())) {
-    return builder_->CreateShl(MakeValue(op->args[0]), MakeValue(op->args[1]));
+    return StashInst(builder_->CreateShl(MakeValue(op->args[0]), MakeValue(op->args[1])), op);
   } else if (op->op.same_as(builtin::shift_right())) {
     if (op->args[0].dtype().is_int()) {
-      return builder_->CreateAShr(MakeValue(op->args[0]), MakeValue(op->args[1]));
+      return StashInst(builder_->CreateAShr(MakeValue(op->args[0]), MakeValue(op->args[1])), op);
     } else {
-      return builder_->CreateLShr(MakeValue(op->args[0]), MakeValue(op->args[1]));
+      return StashInst(builder_->CreateLShr(MakeValue(op->args[0]), MakeValue(op->args[1])), op);
     }
   } else if (op->op.same_as(builtin::tvm_storage_sync())) {
-    return CreateStorageSync(op);
+    return StashInst(CreateStorageSync(op), op);
   } else if (op->op.same_as(builtin::address_of())) {
     const BufferLoadNode* load = op->args[0].as<BufferLoadNode>();
     ICHECK(op->args.size() == 1 && load);
@@ -1015,11 +1023,12 @@ llvm::Value* CodeGenLLVM::CreateIntrinsic(const CallNode* op) {
                                               indices_val, load->dtype);
     unsigned addrspace =
         llvm::dyn_cast<llvm::PointerType>(buffer_ptr.addr->getType())->getAddressSpace();
-    return builder_->CreatePointerCast(buffer_ptr.addr, t_char_->getPointerTo(addrspace));
+    return StashInst(builder_->CreatePointerCast(buffer_ptr.addr, t_char_->getPointerTo(addrspace)),
+                     op);
   } else if (op->op.same_as(builtin::reinterpret()) && is_zero(op->args[0])) {
     return llvm::Constant::getNullValue(t_void_p_);
   } else if (op->op.same_as(builtin::isnullptr())) {
-    return builder_->CreateIsNull(MakeValue(op->args[0]));
+    return StashInst(builder_->CreateIsNull(MakeValue(op->args[0])), op);
   } else if (op->op.same_as(builtin::large_uint_imm())) {
     ICHECK_EQ(op->args.size(), 2U);
     uint64_t low = static_cast<uint64_t>(Downcast<IntImm>(op->args[0])->value);
@@ -1032,27 +1041,27 @@ llvm::Value* CodeGenLLVM::CreateIntrinsic(const CallNode* op) {
     auto* then_block = llvm::BasicBlock::Create(*ctx, "if_then", function_);
     auto* else_block = llvm::BasicBlock::Create(*ctx, "if_else", function_);
     auto* end_block = llvm::BasicBlock::Create(*ctx, "if_end", function_);
-    builder_->CreateCondBr(MakeValue(op->args[0]), then_block, else_block);
+    StashInst(builder_->CreateCondBr(MakeValue(op->args[0]), then_block, else_block), op);
     builder_->SetInsertPoint(then_block);
     llvm::Value* then_value = MakeValue(op->args[1]);
     llvm::BasicBlock* then_value_block = builder_->GetInsertBlock();
-    builder_->CreateBr(end_block);
+    StashInst(builder_->CreateBr(end_block), op);
     builder_->SetInsertPoint(else_block);
     llvm::Value* else_value = MakeValue(op->args[2]);
     llvm::BasicBlock* else_value_block = builder_->GetInsertBlock();
-    builder_->CreateBr(end_block);
+    StashInst(builder_->CreateBr(end_block), op);
     builder_->SetInsertPoint(end_block);
     llvm::PHINode* value = builder_->CreatePHI(then_value->getType(), 2);
     value->addIncoming(then_value, then_value_block);
     value->addIncoming(else_value, else_value_block);
-    return value;
+    return StashInst(value, op);
   } else if (op->op.same_as(builtin::ret())) {
     auto const* val = op->args[0].as<IntImmNode>();
     ICHECK(val) << "the tir.ret should be transformed to return zero "
                 << "before the llvm code generation.";
     ICHECK_EQ(val->value, 0) << "the tir.ret should be transformed to "
                              << "return zero before the llvm code generation.";
-    builder_->CreateRet(ConstInt32(0));
+    StashInst(builder_->CreateRet(ConstInt32(0)), op);
     // LLVM allows exactly one terminator in a single basic block
     // append a new dummy basic block to avoid error.
     llvm::BasicBlock* ret_dummy =
@@ -1191,34 +1200,34 @@ llvm::Value* CodeGenLLVM::VisitExpr_(const ModNode* op) {
   llvm::Value* a = MakeValue(op->a);
   llvm::Value* b = MakeValue(op->b);
   if (op->dtype.is_int()) {
-    return builder_->CreateSRem(a, b);
+    return StashInst(builder_->CreateSRem(a, b), op);
   } else if (op->dtype.is_uint()) {
-    return builder_->CreateURem(a, b);
+    return StashInst(builder_->CreateURem(a, b), op);
   } else {
     ICHECK(op->dtype.is_float());
-    return builder_->CreateFRem(a, b);
+    return StashInst(builder_->CreateFRem(a, b), op);
   }
 }
 
 llvm::Value* CodeGenLLVM::VisitExpr_(const MinNode* op) {
   llvm::Value* a = MakeValue(op->a);
   llvm::Value* b = MakeValue(op->b);
-  return builder_->CreateSelect(CreateLT(op->a.dtype(), a, b), a, b);
+  return StashInst(builder_->CreateSelect(CreateLT(op->a.dtype(), a, b), a, b), op);
 }
 
 llvm::Value* CodeGenLLVM::VisitExpr_(const MaxNode* op) {
   llvm::Value* a = MakeValue(op->a);
   llvm::Value* b = MakeValue(op->b);
-  return builder_->CreateSelect(CreateGT(op->a.dtype(), a, b), a, b);
+  return StashInst(builder_->CreateSelect(CreateGT(op->a.dtype(), a, b), a, b), op);
 }
 
 llvm::Value* CodeGenLLVM::VisitExpr_(const EQNode* op) {
   llvm::Value* a = MakeValue(op->a);
   llvm::Value* b = MakeValue(op->b);
   if (op->a.dtype().is_int() || op->a.dtype().is_uint()) {
-    return builder_->CreateICmpEQ(a, b);
+    return StashInst(builder_->CreateICmpEQ(a, b), op);
   } else {
-    return builder_->CreateFCmpOEQ(a, b);
+    return StashInst(builder_->CreateFCmpOEQ(a, b), op);
   }
 }
 
@@ -1226,27 +1235,28 @@ llvm::Value* CodeGenLLVM::VisitExpr_(const NENode* op) {
   llvm::Value* a = MakeValue(op->a);
   llvm::Value* b = MakeValue(op->b);
   if (op->a.dtype().is_int() || op->a.dtype().is_uint()) {
-    return builder_->CreateICmpNE(a, b);
+    return StashInst(builder_->CreateICmpNE(a, b), op);
   } else {
-    return builder_->CreateFCmpONE(a, b);
+    return StashInst(builder_->CreateFCmpONE(a, b), op);
   }
 }
 
 llvm::Value* CodeGenLLVM::VisitExpr_(const AndNode* op) {
-  return builder_->CreateAnd(MakeValue(op->a), MakeValue(op->b));
+  return StashInst(builder_->CreateAnd(MakeValue(op->a), MakeValue(op->b)), op);
 }
 
 llvm::Value* CodeGenLLVM::VisitExpr_(const OrNode* op) {
-  return builder_->CreateOr(MakeValue(op->a), MakeValue(op->b));
+  return StashInst(builder_->CreateOr(MakeValue(op->a), MakeValue(op->b)), op);
 }
 
 llvm::Value* CodeGenLLVM::VisitExpr_(const NotNode* op) {
-  return builder_->CreateNot(MakeValue(op->a));
+  return StashInst(builder_->CreateNot(MakeValue(op->a)), op);
 }
 
 llvm::Value* CodeGenLLVM::VisitExpr_(const SelectNode* op) {
-  return builder_->CreateSelect(MakeValue(op->condition), MakeValue(op->true_value),
-                                MakeValue(op->false_value));
+  return StashInst(builder_->CreateSelect(MakeValue(op->condition), MakeValue(op->true_value),
+                                          MakeValue(op->false_value)),
+                   op);
 }
 
 llvm::Value* CodeGenLLVM::VisitExpr_(const LetNode* op) {
@@ -1370,12 +1380,14 @@ llvm::Value* CodeGenLLVM::VisitExpr_(const BufferLoadNode* op) {
   DataType value_dtype = op->dtype;
 
   std::vector<llvm::Value*> loads;
+  Span s = op->span;
 
-  auto make_load = [this, &loads](TypedPointer buffer_ptr, int /* subelement_i */, int alignment,
-                                  bool is_volatile) {
+  auto make_load = [this, s, &loads](TypedPointer buffer_ptr, int /* subelement_i */, int alignment,
+                                     bool is_volatile) {
 #if TVM_LLVM_VERSION >= 110
-    auto load = builder_->CreateAlignedLoad(buffer_ptr.type, buffer_ptr.addr,
-                                            llvm::Align(alignment), is_volatile);
+    auto load = StashInst(builder_->CreateAlignedLoad(buffer_ptr.type, buffer_ptr.addr,
+                                                      llvm::Align(alignment), is_volatile),
+                          s);
 #elif TVM_LLVM_VERSION >= 80
     auto load =
         builder_->CreateAlignedLoad(buffer_ptr.type, buffer_ptr.addr, alignment, is_volatile);
@@ -1410,17 +1422,19 @@ llvm::Value* CodeGenLLVM::VisitExpr_(const CallNode* op) {
       // call extern intrinsic
       ICHECK_GE(op->args.size(), 1U);
       auto global_symbol = Downcast<StringImm>(op->args[0]);
-      return this->CreateCallExtern(GetType(GetRef<PrimExpr>(op)), global_symbol->value, op->args,
-                                    true);
+      return StashInst(this->CreateCallExtern(GetType(GetRef<PrimExpr>(op)), global_symbol->value,
+                                              op->args, true),
+                       op);
     } else if (op_attr_global_symbol_.count(call_op)) {
       // call extern if the op itself have a global symbol.
-      return this->CreateCallExtern(GetType(GetRef<PrimExpr>(op)), op_attr_global_symbol_[call_op],
-                                    op->args, false);
+      return StashInst(this->CreateCallExtern(GetType(GetRef<PrimExpr>(op)),
+                                              op_attr_global_symbol_[call_op], op->args, false),
+                       op);
     } else {
       VLOG(2) << "CreateIntrinsic: " << GetRef<Call>(op);
       auto x = CreateIntrinsic(op);
       VLOG(2) << "CreateIntrinsic done";
-      return x;
+      return StashInst(x, op);
     }
   } else {
     ICHECK(op->op.as<GlobalVarNode>());
@@ -1514,12 +1528,12 @@ void CodeGenLLVM::VisitStmt_(const WhileNode* op) {
   auto* while_cond = llvm::BasicBlock::Create(*ctx, "while_cond", function_);
   auto* while_body = llvm::BasicBlock::Create(*ctx, "while_body", function_);
   auto* while_merge = llvm::BasicBlock::Create(*ctx, "while_merge", function_);
-  builder_->CreateBr(while_cond);
+  StashInst(builder_->CreateBr(while_cond), op);
   builder_->SetInsertPoint(while_cond);
   builder_->CreateCondBr(MakeValue(op->condition), while_body, while_merge);
   builder_->SetInsertPoint(while_body);
   this->VisitStmt(op->body);
-  builder_->CreateBr(while_cond);
+  StashInst(builder_->CreateBr(while_cond), op);
   builder_->SetInsertPoint(while_merge);
 }
 
@@ -1530,18 +1544,18 @@ void CodeGenLLVM::VisitStmt_(const IfThenElseNode* op) {
   auto* end_block = llvm::BasicBlock::Create(*ctx, "if_end", function_);
   if (op->else_case.defined()) {
     auto* else_block = llvm::BasicBlock::Create(*ctx, "if_else", function_);
-    builder_->CreateCondBr(cond, then_block, else_block);
+    StashInst(builder_->CreateCondBr(cond, then_block, else_block), op);
     builder_->SetInsertPoint(then_block);
     this->VisitStmt(op->then_case);
-    builder_->CreateBr(end_block);
+    StashInst(builder_->CreateBr(end_block), op);
     builder_->SetInsertPoint(else_block);
     this->VisitStmt(op->else_case);
-    builder_->CreateBr(end_block);
+    StashInst(builder_->CreateBr(end_block), op);
   } else {
-    builder_->CreateCondBr(cond, then_block, end_block, md_very_likely_branch_);
+    StashInst(builder_->CreateCondBr(cond, then_block, end_block, md_very_likely_branch_), op);
     builder_->SetInsertPoint(then_block);
     this->VisitStmt(op->then_case);
-    builder_->CreateBr(end_block);
+    StashInst(builder_->CreateBr(end_block), op);
   }
   builder_->SetInsertPoint(end_block);
 }
@@ -1633,6 +1647,7 @@ void CodeGenLLVM::VisitStmt_(const AttrStmtNode* op) {
 }
 
 void CodeGenLLVM::VisitStmt_(const AssertStmtNode* op) {
+  // auto a_cu =
   With<arith::ConstraintContext> cctx(analyzer_.get(), op->condition);
   this->VisitStmt(op->body);
 }

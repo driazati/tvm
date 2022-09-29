@@ -47,6 +47,7 @@
 #include <utility>        // For std::pair and std::move
 #include <vector>
 
+#include "../../printer/text_printer.h"
 #include "../analysis/check_contains.h"  // For the visitor CheckContains
 #include "common_subexpr_elim_tools.h"   // For the auxiliary analysis (visitors) and tools
 #include "replace_selected_expr.h"       // For the mutator ReplaceSelectedExpr

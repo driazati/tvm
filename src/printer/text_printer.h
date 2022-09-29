@@ -46,6 +46,7 @@
 #include "doc.h"
 #include "meta_data.h"
 #include "text_printer.h"
+#include "tvm/ir/expr.h"
 
 namespace tvm {
 class TextPrinter;
@@ -273,12 +274,40 @@ class MetaCollector : public StmtExprVisitor {
   TextMetaDataContext* meta_;
 };
 
+class Printer2 : public StmtMutator, public ExprMutator {
+  Stmt VisitStmt_(const AttrStmtNode* op) override;
+  Stmt VisitStmt_(const IfThenElseNode* op) override;
+  Stmt VisitStmt_(const LetStmtNode* op) override;
+  Stmt VisitStmt_(const ForNode* op) override;
+  Stmt VisitStmt_(const WhileNode* op) override;
+  Stmt VisitStmt_(const AllocateNode* op) override;
+  Stmt VisitStmt_(const AllocateConstNode* op) override;
+  Stmt VisitStmt_(const DeclBufferNode* op) override;
+  Stmt VisitStmt_(const StoreNode* op) override;
+  Stmt VisitStmt_(const BufferStoreNode* op) override;
+  Stmt VisitStmt_(const BufferRealizeNode* op) override;
+  Stmt VisitStmt_(const AssertStmtNode* op) override;
+  Stmt VisitStmt_(const ProducerStoreNode* op) override;
+  Stmt VisitStmt_(const ProducerRealizeNode* op) override;
+  Stmt VisitStmt_(const PrefetchNode* op) override;
+  Stmt VisitStmt_(const SeqStmtNode* op) override;
+  Stmt VisitStmt_(const EvaluateNode* op) override;
+  Stmt VisitStmt_(const BlockNode* op) override;
+  Stmt VisitStmt_(const BlockRealizeNode* op) override;
+};
+
 class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
                        public ExprFunctor<Doc(const PrimExpr&)>,
                        public TypeFunctor<Doc(const Type&)> {
  public:
   explicit TIRTextPrinter(bool show_meta, TextMetaDataContext* meta)
-      : show_meta_(show_meta), meta_(meta), meta_collector_(meta) {}
+      : show_meta_(show_meta), meta_(meta), meta_collector_(meta), current_line_(1) {
+    register_new_line_hook([&]() { return flushSpans(); });
+  }
+
+  ~TIRTextPrinter() { register_new_line_hook(nullptr); }
+
+  Doc flushSpans();
 
   /*! \brief Print the node */
   Doc Print(const ObjectRef& node);
@@ -289,6 +318,14 @@ class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
    * \return true when a name re-mapping was found.
    */
   bool GetVarName(::tvm::tir::Var v, std::string* s);
+
+  std::vector<std::tuple<const PrimExprNode*, size_t>> GetExprLines() const {
+    return expr_node_lines_;
+  }
+
+  std::vector<std::tuple<const StmtNode*, size_t>> GetStmtNodeLines() const {
+    return stmt_node_lines_;
+  }
 
  private:
   /*! \brief whether show meta data */
@@ -305,6 +342,17 @@ class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   std::unordered_map<DataProducer, Doc, ObjectPtrHash, ObjectPtrEqual> memo_producer_;
   /*! \brief name allocation map */
   std::unordered_map<std::string, int> name_alloc_map_;
+
+  std::vector<const StmtNode*> stmt_nodes_;
+  std::vector<const PrimExprNode*> per_line_expr_nodes_;
+
+  // record of lines output per statement
+  std::vector<std::tuple<const StmtNode*, size_t>> stmt_node_lines_;
+  std::vector<std::tuple<const PrimExprNode*, size_t>> expr_node_lines_;
+  size_t current_line_;
+  // std::vector<BaseExprNode*> relay_exprs_;
+  std::vector<BaseExprNode*> expr_nodes_;
+  std::vector<std::string> pending_info_;
 
   friend class tvm::TextPrinter;
 
@@ -378,6 +426,9 @@ class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   Doc DataProducerNode2Doc(const DataProducerNode* op, Doc doc);
   Doc PrintString(const StringObj* op) { return Doc::StrLiteral(op->data); }
   Doc PrintBufferRegion(const BufferRegionNode* op);
+
+  Doc PrintOptionalInfo(const StmtNode* stmt);
+  // Doc PrintOptionalInfo(const BaseExprNode* stmt);
 
   /*!
    * \brief special method to print out data type

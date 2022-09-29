@@ -499,6 +499,7 @@ TVM_DLL Pass LowerAsyncDMA();
  */
 TVM_DLL Pass CommonSubexprElimTIR(bool enable_cse_tir = true, bool identify_equiv_terms = false);
 
+TVM_DLL Pass InstallDebugSpans(bool just_dump);
 /*!
  * \brief Unify all the thread bindings for "blockIdx.x/y/z", "threadIdx.x/y/z", and
  *        "vthread.x/y/z". Before the unification, two vars that are bound to a thread axis (e.g.,

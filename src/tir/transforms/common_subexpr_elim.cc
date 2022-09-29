@@ -47,6 +47,7 @@
 #include <utility>        // For std::pair and std::move
 #include <vector>
 
+#include "../../printer/text_printer.h"
 #include "../analysis/check_contains.h"  // For the visitor CheckContains
 #include "common_subexpr_elim_tools.h"   // For the auxiliary analysis (visitors) and tools
 #include "replace_selected_expr.h"       // For the mutator ReplaceSelectedExpr
@@ -624,6 +625,184 @@ Stmt CommonSubexpressionEliminator::VisitStmt_(const ForNode* op) {
   }
 }
 
+Stmt DebugInfoInstaller::InstallInfo(const Stmt& stmt) {
+  DebugInfoInstaller installer(stmt);
+  return installer.VisitStmt(stmt);
+}
+
+DebugInfoInstaller::DebugInfoInstaller(const Stmt& stmt) : initial_body_(stmt) {
+  std::cout << "Running DebugInfoInstaller\n";
+  TextMetaDataContext meta;
+  tvm::tir::TIRTextPrinter printer(false, &meta);
+  auto result = printer.Print(stmt).str();
+  // TODO: Make this <name of primfunc>.tir
+  std::ofstream out("main.tir");
+  out << result;
+  out.close();
+  std::cout << result << "\n";
+  lines_ = printer.GetStmtNodeLines();
+  expr_lines_ = printer.GetExprLines();
+
+  for (const auto& line : lines_) {
+    // VLOG(0) << "Recorded " << std::get<0>(line) << " @ line " << std::get<1>(line) << "\n";
+    stmt_lines_[std::get<0>(line)] = std::get<1>(line);
+  }
+  for (const auto& line : expr_lines_) {
+    // VLOG(0) << "Recorded " << std::get<0>(line) << " @ line " << std::get<1>(line) << "\n";
+    expr_lines_map_[std::get<0>(line)] = std::get<1>(line);
+  }
+  
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr(const PrimExpr& expr) {
+  PrimExpr result = expr;
+  result = StmtExprMutator::VisitExpr(result);
+  return result;
+}
+
+Stmt DebugInfoInstaller::VisitStmt(const Stmt& stmt) {
+  Stmt result = stmt;
+  result = StmtExprMutator::VisitStmt(result);
+  return result;
+}
+
+Span DebugInfoInstaller::MaybeSpan(const StmtNode* op) {
+  auto entry = stmt_lines_.find(op);
+  if (entry == stmt_lines_.end()) {
+    return Span(SourceName::Get("missing-file"), 1, 2, 3, 4);
+  } else {
+    size_t column = 0;
+    return Span(SourceName::Get("output.irmodule"), entry->second, entry->second, column, column);
+  }
+}
+
+// Stmt DebugInfoInstaller::VisitStmt_(const AttrStmtNode* op) {}
+// Stmt DebugInfoInstaller::VisitStmt_(const IfThenElseNode* op) {}
+// Stmt DebugInfoInstaller::VisitStmt_(const LetStmtNode* op) {}
+// Stmt DebugInfoInstaller::VisitStmt_(const AssertStmtNode* op) {}
+Stmt DebugInfoInstaller::VisitStmt_(const ForNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<ForNode>();
+  return For(newop->loop_var, newop->min, newop->extent, newop->kind, newop->body,
+             newop->thread_binding, newop->annotations, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const WhileNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<WhileNode>();
+  return While(newop->condition, newop->body, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const AllocateNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<AllocateNode>();
+  return Allocate(newop->buffer_var, newop->dtype, newop->extents, newop->condition, newop->body,
+                  newop->annotations, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const AllocateConstNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<AllocateConstNode>();
+  // todo: data vs data_or_idx
+  return AllocateConst(newop->buffer_var, newop->dtype, newop->extents, newop->data, newop->body,
+                       newop->annotations, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const DeclBufferNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<DeclBufferNode>();
+  return DeclBuffer(newop->buffer, newop->body, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const StoreNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<StoreNode>();
+  return Store(newop->buffer_var, newop->value, newop->index, newop->predicate, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const BufferStoreNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<BufferStoreNode>();
+  return BufferStore(newop->buffer, newop->value, newop->indices, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const BufferRealizeNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<BufferRealizeNode>();
+  return BufferRealize(newop->buffer, newop->bounds, newop->condition, newop->body, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const ProducerStoreNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<ProducerStoreNode>();
+  return ProducerStore(newop->producer, newop->value, newop->indices, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const ProducerRealizeNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<ProducerRealizeNode>();
+  return ProducerRealize(newop->producer, newop->bounds, newop->condition, newop->body,
+                         newop->storage_scope, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const PrefetchNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<PrefetchNode>();
+  return Prefetch(newop->buffer, newop->bounds, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const SeqStmtNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<SeqStmtNode>();
+  return SeqStmt(newop->seq, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const EvaluateNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<EvaluateNode>();
+  return Evaluate(newop->value, MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const BlockNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<BlockNode>();
+  return Block(newop->iter_vars, newop->reads, newop->writes, newop->name_hint, newop->body,
+               newop->init, newop->alloc_buffers, newop->match_buffers, newop->annotations,
+               MaybeSpan(op));
+}
+Stmt DebugInfoInstaller::VisitStmt_(const BlockRealizeNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<BlockRealizeNode>();
+  return BlockRealize(newop->iter_values, newop->predicate, newop->block, MaybeSpan(op));
+}
+
+Stmt DebugInfoInstaller::VisitStmt_(const LetStmtNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<LetStmtNode>();
+  return LetStmt(newop->var, newop->value, newop->body, MaybeSpan(op));
+}
+
+Stmt DebugInfoInstaller::VisitStmt_(const IfThenElseNode* op) {
+  std::cout << "Visiting an ifthenelse\n";
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<IfThenElseNode>();
+  // return IfThenElse(newop->condition, newop->then_case, newop->else_case, Span(SourceName::Get("AAAA.irmodule"), 1, 2, 3, 4));
+  return IfThenElse(newop->condition, newop->then_case, newop->else_case, MaybeSpan(op));
+}
+
+Stmt DebugInfoInstaller::VisitStmt_(const AttrStmtNode* op) {
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<AttrStmtNode>();
+  return AttrStmt(newop->node, newop->attr_key, newop->value, newop->body, MaybeSpan(op));
+}
+
+Stmt DebugInfoInstaller::VisitStmt_(const AssertStmtNode* op) {
+  // std::cout << "Visiting assert statement at " << op << "\n";
+  auto new_stmt = StmtExprMutator::VisitStmt_(op);
+  auto newop = new_stmt.as<AssertStmtNode>();
+  return AssertStmt(newop->condition, newop->message, newop->body, MaybeSpan(op));
+  // // return AssertStmt(newop->condition, newop->message, newop->body,
+  // // Span(SourceName::Get("missing-file"), 1, 2, 3, 4)); new_stmt.span
+  // auto entry = stmt_lines_.find(op);
+  // if (entry == stmt_lines_.end()) {
+  //   return AssertStmt(newop->condition, newop->message, newop->body,
+  //                     Span(SourceName::Get("missing-file"), 1, 2, 3, 4));
+  // } else {
+  //   size_t column = 0;
+  //   return AssertStmt(
+  //       newop->condition, newop->message, newop->body,
+  //       Span(SourceName::Get("output.irmodule"), entry->second, entry->second, column, column));
+  // }
+  // // AssertStmt(PrimExpr condition, PrimExpr message, Stmt body, Span span = Span());
+}
+
 namespace transform {
 
 /*!
@@ -653,6 +832,30 @@ Pass CommonSubexprElimTIR(bool enable_cse_tir, bool identify_equiv_terms) {
     return f;
   };
   return CreatePrimFuncPass(pass_func, 0, "tir.CommonSubexprElimTIR", {});
+}
+
+Pass InstallDebugSpans(bool just_dump) {
+  auto pass_func = [just_dump](PrimFunc f, IRModule m, PassContext ctx) {
+    if (just_dump) {
+      // Hacky way to make another pass, delete this
+      std::cout << "dumping afterwards\n";
+      // These seem to be mostly the same as TIRTextPrinter but with a changed header (?)
+      // std::cout << m << "\n";
+      // std::cout << f << "\n";
+      TextMetaDataContext meta;
+      tvm::tir::TIRTextPrinter printer(false, &meta);
+      std::cout << printer.Print(f).str() << "\n";
+
+      return f;
+    } else {
+      std::cout << "running info installer\n";
+      auto* n = f.CopyOnWrite();
+      n->body = DebugInfoInstaller::InstallInfo(std::move(f->body));
+
+      return f;
+    }
+  };
+  return CreatePrimFuncPass(pass_func, 0, "tir.InstallDebugSpans", {});
 }
 
 // The pass can now be invoked via the pass infrastructure, but we also add a Python binding for it

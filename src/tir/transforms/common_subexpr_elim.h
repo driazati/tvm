@@ -87,6 +87,66 @@ class CommonSubexpressionEliminator : public StmtExprMutator {
   Var GenerateNewVar(DataType type_annotation);
 };
 
+class DebugInfoInstaller : public StmtExprMutator {
+ public:
+  // Toplevel (static) function
+  static Stmt InstallInfo(const Stmt& stmt);
+
+  PrimExpr VisitExpr(const PrimExpr& expr) override;
+  Stmt VisitStmt(const Stmt& stmt) override;
+
+  // // int GetNbVarGenerated();
+
+ protected:
+  // Constructor
+  DebugInfoInstaller(const Stmt& stmt);
+
+  Stmt VisitStmt_(const AttrStmtNode* op) override;
+  Stmt VisitStmt_(const IfThenElseNode* op) override;
+  Stmt VisitStmt_(const LetStmtNode* op) override;
+  Stmt VisitStmt_(const ForNode* op) override;
+  Stmt VisitStmt_(const WhileNode* op) override;
+  Stmt VisitStmt_(const AllocateNode* op) override;
+  Stmt VisitStmt_(const AllocateConstNode* op) override;
+  Stmt VisitStmt_(const DeclBufferNode* op) override;
+  Stmt VisitStmt_(const StoreNode* op) override;
+  Stmt VisitStmt_(const BufferStoreNode* op) override;
+  Stmt VisitStmt_(const BufferRealizeNode* op) override;
+  Stmt VisitStmt_(const AssertStmtNode* op) override;
+  Stmt VisitStmt_(const ProducerStoreNode* op) override;
+  Stmt VisitStmt_(const ProducerRealizeNode* op) override;
+  Stmt VisitStmt_(const PrefetchNode* op) override;
+  Stmt VisitStmt_(const SeqStmtNode* op) override;
+  Stmt VisitStmt_(const EvaluateNode* op) override;
+  Stmt VisitStmt_(const BlockNode* op) override;
+  Stmt VisitStmt_(const BlockRealizeNode* op) override;
+
+  // PrimExpr VisitExpr_(const LetNode* op) override;
+  // Stmt VisitStmt_(const LetStmtNode* op) override;
+  // Stmt VisitStmt_(const ForNode* op) override;
+
+ private:
+  Stmt initial_body_;     // Kept for checking if names of new variables already exist
+  std::vector<std::tuple<const StmtNode*, size_t>> lines_;
+  std::vector<std::tuple<const PrimExprNode*, size_t>> expr_lines_;
+  std::unordered_map<const StmtNode*, size_t> stmt_lines_;
+  std::unordered_map<const PrimExprNode*, size_t> expr_lines_map_;
+
+  Span MaybeSpan(const StmtNode* op);
+  
+  //   Context context_;       // Context associating variables to (maybe) definitions
+//   int num_last_try_ = 0;  // Number of the last variable tried
+//   int nb_var_ = 0;        // Number of variables introduced by the CSE pass
+
+//   bool identify_equiv_terms_ = false;
+
+//   static bool ForbiddenComputation(const PrimExpr& expr);
+//   static bool IsEligibleComputation(const PrimExpr& expr);
+//   static bool CanContainEligibleComputations(const PrimExpr& expr);
+//   static bool OrderOnExprAndFrequency(std::pair<PrimExpr, size_t> a, std::pair<PrimExpr, size_t> b);
+//   Var GenerateNewVar(DataType type_annotation);
+};
+
 }  // namespace tir
 }  // namespace tvm
 

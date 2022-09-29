@@ -251,6 +251,8 @@ Array<tvm::transform::Pass> CreatePassList(bool disable_loop_partition) {
 
   pass_list.push_back(
       tir::transform::CommonSubexprElimTIR(!disable_cse_tir, enable_equiv_terms_in_cse_tir));
+  
+
 
   return pass_list;
 }
@@ -480,7 +482,7 @@ runtime::Module TIRToRuntime(const Map<Target, IRModule>& inputs_arg,
       mhost.Import(it);
     }
   }
-
+  std::cout << "got runtime host module\n";
   return mhost;
 }
 
@@ -591,7 +593,8 @@ transform::Sequential HostModulePassManager(IRModule mixed_mod, Target target_ho
   host_pass_list.push_back(tir::transform::LowerIntrin());
   host_pass_list.push_back(tir::transform::LowerDeviceStorageAccessInfo());
   host_pass_list.push_back(tir::transform::CombineContextCall());
-
+  host_pass_list.push_back(tir::transform::InstallDebugSpans(false));
+  host_pass_list.push_back(tir::transform::InstallDebugSpans(true));
   return transform::Sequential(host_pass_list);
 }
 
@@ -615,7 +618,6 @@ transform::Sequential DeviceModulePassManager(IRModule mixed_mod, Target target)
   device_pass_list.push_back(tir::transform::LowerCustomDatatypes());
   device_pass_list.push_back(tir::transform::LowerDeviceStorageAccessInfo());
   device_pass_list.push_back(tir::transform::LowerIntrin());
-
   return transform::Sequential(device_pass_list);
 }
 

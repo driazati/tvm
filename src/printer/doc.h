@@ -55,6 +55,7 @@ class DocAtom : public ObjectRef {
   TVM_DEFINE_OBJECT_REF_METHODS(DocAtom, ObjectRef, DocAtomNode);
 };
 
+
 /*!
  * \brief Stream-like interface for Doc DSL.
  *
@@ -162,6 +163,10 @@ class Doc {
   /*! \brief Internal doc stream. */
   std::vector<DocAtom> stream_;
 };
+
+
+void register_new_line_hook(std::function<Doc()> fn);
+// void register_new_line_hook(Doc(*fn)());
 
 }  // namespace tvm
 #endif  // TVM_PRINTER_DOC_H_

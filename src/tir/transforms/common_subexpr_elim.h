@@ -101,6 +101,42 @@ class DebugInfoInstaller : public StmtExprMutator {
   // Constructor
   DebugInfoInstaller(const Stmt& stmt);
 
+  // PrimExpr VisitExpr_(const VarNode* op) override;
+  // PrimExpr VisitExpr_(const SizeVarNode* op) override;
+  // PrimExpr VisitExpr_(const LoadNode* op) override;
+  // PrimExpr VisitExpr_(const BufferLoadNode* op) override;
+  // PrimExpr VisitExpr_(const ProducerLoadNode* op) override;
+  // PrimExpr VisitExpr_(const LetNode* op) override;
+  PrimExpr VisitExpr_(const CallNode* op) override;
+  PrimExpr VisitExpr_(const AddNode* op) override;
+  PrimExpr VisitExpr_(const SubNode* op) override;
+  PrimExpr VisitExpr_(const MulNode* op) override;
+  PrimExpr VisitExpr_(const DivNode* op) override;
+  PrimExpr VisitExpr_(const ModNode* op) override;
+  PrimExpr VisitExpr_(const FloorDivNode* op) override;
+  PrimExpr VisitExpr_(const FloorModNode* op) override;
+  PrimExpr VisitExpr_(const MinNode* op) override;
+  PrimExpr VisitExpr_(const MaxNode* op) override;
+  PrimExpr VisitExpr_(const EQNode* op) override;
+  PrimExpr VisitExpr_(const NENode* op) override;
+  PrimExpr VisitExpr_(const LTNode* op) override;
+  PrimExpr VisitExpr_(const LENode* op) override;
+  PrimExpr VisitExpr_(const GTNode* op) override;
+  PrimExpr VisitExpr_(const GENode* op) override;
+  PrimExpr VisitExpr_(const AndNode* op) override;
+  PrimExpr VisitExpr_(const OrNode* op) override;
+  PrimExpr VisitExpr_(const ReduceNode* op) override;
+  PrimExpr VisitExpr_(const CastNode* op) override;
+  PrimExpr VisitExpr_(const NotNode* op) override;
+  PrimExpr VisitExpr_(const SelectNode* op) override;
+  PrimExpr VisitExpr_(const RampNode* op) override;
+  PrimExpr VisitExpr_(const BroadcastNode* op) override;
+  PrimExpr VisitExpr_(const ShuffleNode* op) override;
+  PrimExpr VisitExpr_(const IntImmNode* op) override;
+  PrimExpr VisitExpr_(const FloatImmNode* op) override;
+  PrimExpr VisitExpr_(const StringImmNode* op) override;
+  PrimExpr VisitExpr_(const AnyNode* op) override;
+
   Stmt VisitStmt_(const AttrStmtNode* op) override;
   Stmt VisitStmt_(const IfThenElseNode* op) override;
   Stmt VisitStmt_(const LetStmtNode* op) override;
@@ -133,7 +169,7 @@ class DebugInfoInstaller : public StmtExprMutator {
   std::unordered_map<const PrimExprNode*, size_t> expr_lines_map_;
 
   Span MaybeSpan(const StmtNode* op);
-  
+  Span MaybeSpan(const PrimExprNode* op);
   //   Context context_;       // Context associating variables to (maybe) definitions
 //   int num_last_try_ = 0;  // Number of the last variable tried
 //   int nb_var_ = 0;        // Number of variables introduced by the CSE pass

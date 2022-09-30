@@ -522,18 +522,19 @@ Doc TIRTextPrinter::flushSpans() {
   }
   for (size_t i = 0; i < per_line_expr_nodes_.size(); i++) {
     const auto& entry = per_line_expr_nodes_[i];
-    if (entry->span.defined()) {
-      doc << entry->span->source_name->name << ":" << entry->span->line;
-    } else {
-      doc << "missing";
-    }
-    if (i != per_line_expr_nodes_.size() - 1) {
-      doc << " ";
-    }
+    // if (entry->span.defined()) {
+    //   doc << entry->span->source_name->name << ":" << entry->span->line;
+    // } else {
+    //   doc << "missing";
+    // }
+    // if (i != per_line_expr_nodes_.size() - 1) {
+    //   doc << " ";
+    // }
 
     expr_node_lines_.push_back(std::make_tuple(entry, current_line_));
   }
-  expr_node_lines_.clear();
+  // std::cout << "Flushing " << expr_node_lines_.size()
+  per_line_expr_nodes_.clear();
   stmt_nodes_.clear();
   doc << "]";
   current_line_ += 1;

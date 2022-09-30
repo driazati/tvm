@@ -8,6 +8,7 @@ from tvm.testing.aot import generate_ref_data
 from pathlib import Path
 import textwrap
 import rich
+
 # tvmscript -> IRModule (tir) -> runtime::Module
 # tvmscript bypasses relay by writing TIR straight in Python
 
@@ -155,17 +156,19 @@ target_kind = "llvm"
 # }))
 # print("got mod")
 
+
 @tvm.script.ir_module
 class MyModule:
     @T.prim_func
     def main(a: T.handle, b: T.handle):
-        T.func_attr({'global_symbol': 'main', 'tir.noalias': True})
+        T.func_attr({"global_symbol": "main", "tir.noalias": True})
         A = T.match_buffer(a, (8,), dtype="float32")
         B = T.match_buffer(b, (8,), dtype="float32")
         for i in range(8):
             with T.block("B"):
                 vi = T.axis.spatial(8, i)
                 B[vi] = A[vi] + 1.5
+
 
 ir_mod = MyModule
 a = tvm.build(ir_mod, target="llvm")
@@ -198,7 +201,7 @@ test_so_path = Path(__file__).resolve().parent / "test.so"
 print("Saving to", test_so_path)
 
 # function that does the work is called:
-    # tvmgen_default_fused_nn_bias_add_compute_
+# tvmgen_default_fused_nn_bias_add_compute_
 # Exporting without the AOT executor makes __tvm_main__ undefined
 # Using the AOT executor makes it defined and global
 # the 'cc' arg here is just used to link various .o files:

@@ -39,8 +39,8 @@ assert((8 == cast(int32, arg.a.shape_1: Buffer(arg.a.shape, int64, [1], [])[0]))
     assert((dev_id == @tir.tvm_struct_get(arg.b, 0, 9, dtype=int32)), "Argument arg.b.device_id has an unsatisfied constraint: (dev_id == tir.tvm_struct_get(arg.b, 0, 9))") [missing]
     attr [0] "compute_scope" = "main_compute_"; [missing]
     for (i: int32, 0, 8) { [missing]
-      assert(False, "Some numbers") [/home/driazati/work/t2/test.py:31]
-      B_1: Buffer(B, float32, [8], [])[i] = (A_1: Buffer(A, float32, [8], [])[i] + 1f32) [/home/driazati/work/t2/test.py:32]
+      assert(False, "Some numbers") [/home/driazati/work/t2/tests/python/tir/test_debug_info.py:42]
+      B_1: Buffer(B, float32, [8], [])[i] = (A_1: Buffer(A, float32, [8], [])[i] + 1f32) [/home/driazati/work/t2/tests/python/tir/test_debug_info.py:43]
     } []
   } []
 }

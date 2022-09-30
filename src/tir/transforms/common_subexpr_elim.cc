@@ -651,7 +651,6 @@ DebugInfoInstaller::DebugInfoInstaller(const Stmt& stmt) : initial_body_(stmt) {
     // VLOG(0) << "Recorded " << std::get<0>(line) << " @ line " << std::get<1>(line) << "\n";
     expr_lines_map_[std::get<0>(line)] = std::get<1>(line);
   }
-  
 }
 
 PrimExpr DebugInfoInstaller::VisitExpr(const PrimExpr& expr) {
@@ -669,11 +668,232 @@ Stmt DebugInfoInstaller::VisitStmt(const Stmt& stmt) {
 Span DebugInfoInstaller::MaybeSpan(const StmtNode* op) {
   auto entry = stmt_lines_.find(op);
   if (entry == stmt_lines_.end()) {
-    return Span(SourceName::Get("missing-file"), 1, 2, 3, 4);
+    return Span(SourceName::Get("missing-file"), 999, 999, 999, 999);
   } else {
     size_t column = 0;
-    return Span(SourceName::Get("output.irmodule"), entry->second, entry->second, column, column);
+    return Span(SourceName::Get("main.tir"), entry->second, entry->second, column, column);
   }
+}
+
+Span DebugInfoInstaller::MaybeSpan(const PrimExprNode* op) {
+  auto entry = expr_lines_map_.find(op);
+  if (entry == expr_lines_map_.end()) {
+    return Span(SourceName::Get("missing-expr-file"), 998, 998, 998, 998);
+  } else {
+    size_t column = 0;
+    return Span(SourceName::Get("main.tir"), entry->second, entry->second, column, column);
+  }
+}
+
+// PrimExpr DebugInfoInstaller::VisitExpr_(const VarNode* op) {
+//   auto new_expr = StmtExprMutator::VisitExpr_(op);
+//   auto newop = new_expr.as<VarNode>();
+//   return Var(newop->name_hint, newop->type_annotation, MaybeSpan(op));
+// }
+
+// PrimExpr DebugInfoInstaller::VisitExpr_(const SizeVarNode* op) {
+//   auto new_expr = StmtExprMutator::VisitExpr_(op);
+//   auto newop = new_expr.as<SizeVarNode>();
+//   return SizeVar(newop->name_hint, newop->dtype, MaybeSpan(op));
+// }
+
+// PrimExpr DebugInfoInstaller::VisitExpr_(const LoadNode* op) {
+//   auto new_expr = StmtExprMutator::VisitExpr_(op);
+//   auto newop = new_expr.as<LoadNode>();
+//   return Load(newop->dtype, newop->buffer_var, newop->index, newop->predicate, MaybeSpan(op));
+// }
+
+// PrimExpr DebugInfoInstaller::VisitExpr_(const BufferLoadNode* op) {
+//   auto new_expr = StmtExprMutator::VisitExpr_(op);
+//   auto newop = new_expr.as<BufferLoadNode>();
+//   return BufferLoad(newop->buffer, newop->indices, MaybeSpan(op));
+// }
+
+// PrimExpr DebugInfoInstaller::VisitExpr_(const ProducerLoadNode* op) {
+//   auto new_expr = StmtExprMutator::VisitExpr_(op);
+//   auto newop = new_expr.as<ProducerLoadNode>();
+//   return ProducerLoad(newop->producer, newop->indices, MaybeSpan(op));
+// }
+
+// PrimExpr DebugInfoInstaller::VisitExpr_(const LetNode* op) {
+//   auto new_expr = StmtExprMutator::VisitExpr_(op);
+//   auto newop = new_expr.as<LetNode>();
+//   return Let(newop->var, newop->value, newop->body, MaybeSpan(op));
+// }
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const CallNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<CallNode>();
+  return Call(newop->dtype, newop->op, newop->args, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const AddNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<AddNode>();
+  return Add(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const SubNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<SubNode>();
+  return Sub(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const MulNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<MulNode>();
+  return Mul(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const DivNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<DivNode>();
+  return Div(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const ModNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<ModNode>();
+  return Mod(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const FloorDivNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<FloorDivNode>();
+  return FloorDiv(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const FloorModNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<FloorModNode>();
+  return FloorMod(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const MinNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<MinNode>();
+  return Min(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const MaxNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<MaxNode>();
+  return Max(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const EQNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<EQNode>();
+  return EQ(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const NENode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<NENode>();
+  return NE(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const LTNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<LTNode>();
+  return LT(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const LENode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<LENode>();
+  return LE(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const GTNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<GTNode>();
+  return GT(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const GENode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<GENode>();
+  return GE(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const AndNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<AndNode>();
+  return And(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const OrNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<OrNode>();
+  return Or(newop->a, newop->b, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const ReduceNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<ReduceNode>();
+  return Reduce(newop->combiner, newop->source, newop->axis, newop->condition, newop->value_index,
+                newop->init, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const CastNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<CastNode>();
+  return Cast(newop->dtype, newop->value, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const NotNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<NotNode>();
+  return Not(newop->a, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const SelectNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<SelectNode>();
+  return Select(newop->condition, newop->true_value, newop->false_value, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const RampNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<RampNode>();
+  return Ramp(newop->base, newop->stride, newop->lanes, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const BroadcastNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<BroadcastNode>();
+  return Broadcast(newop->value, newop->lanes, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const ShuffleNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<ShuffleNode>();
+  return Shuffle(newop->vectors, newop->indices, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const IntImmNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<IntImmNode>();
+  return IntImm(newop->dtype, newop->value, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const FloatImmNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<FloatImmNode>();
+  return FloatImm(newop->dtype, newop->value, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const StringImmNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<StringImmNode>();
+  return StringImm(newop->value, MaybeSpan(op));
+}
+
+PrimExpr DebugInfoInstaller::VisitExpr_(const AnyNode* op) {
+  auto new_expr = StmtExprMutator::VisitExpr_(op);
+  auto newop = new_expr.as<AnyNode>();
+  return Any(MaybeSpan(op));
 }
 
 // Stmt DebugInfoInstaller::VisitStmt_(const AttrStmtNode* op) {}
@@ -773,7 +993,8 @@ Stmt DebugInfoInstaller::VisitStmt_(const IfThenElseNode* op) {
   std::cout << "Visiting an ifthenelse\n";
   auto new_stmt = StmtExprMutator::VisitStmt_(op);
   auto newop = new_stmt.as<IfThenElseNode>();
-  // return IfThenElse(newop->condition, newop->then_case, newop->else_case, Span(SourceName::Get("AAAA.irmodule"), 1, 2, 3, 4));
+  // return IfThenElse(newop->condition, newop->then_case, newop->else_case,
+  // Span(SourceName::Get("AAAA.irmodule"), 1, 2, 3, 4));
   return IfThenElse(newop->condition, newop->then_case, newop->else_case, MaybeSpan(op));
 }
 

@@ -578,14 +578,11 @@ class CodeGenLLVM : public ExprFunctor<llvm::Value*(const PrimExpr&)>,
 
   template <typename InstType>
   InstType* StashInst(InstType* instruction, const Span& span) {
-    std::cout << "Checking span" << std::endl;
     if (span.get() && span.defined()) {
       instruction_lines_[instruction] = std::make_tuple(span->line, span->column);
     } else {
-      // instruction->dump();
       instruction_lines_[instruction] = std::make_tuple(198, 1234);
     }
-    std::cout << "\tdone" << std::endl;
     return instruction;
   }
   std::unordered_map<llvm::Instruction*, std::tuple<int, int>> instruction_lines_;

@@ -224,6 +224,7 @@ class Var(ExprWithOp):
     """
 
     def __init__(self, name_hint, type_annotation=None):
+        print("constructing")
         self.__init_handle_by_constructor__(_ffi_api.Var, name_hint, type_annotation)
 
     @property

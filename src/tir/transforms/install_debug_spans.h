@@ -33,6 +33,58 @@
 namespace tvm {
 namespace tir {
 
+#define TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_EXPRS \
+  X(Call)                                                      \
+  X(Add)                                                       \
+  X(Sub)                                                       \
+  X(Mul)                                                       \
+  X(Div)                                                       \
+  X(Mod)                                                       \
+  X(FloorDiv)                                                  \
+  X(FloorMod)                                                  \
+  X(Min)                                                       \
+  X(Max)                                                       \
+  X(EQ)                                                        \
+  X(NE)                                                        \
+  X(LT)                                                        \
+  X(LE)                                                        \
+  X(GT)                                                        \
+  X(GE)                                                        \
+  X(And)                                                       \
+  X(Or)                                                        \
+  X(Reduce)                                                    \
+  X(Cast)                                                      \
+  X(Not)                                                       \
+  X(Select)                                                    \
+  X(Ramp)                                                      \
+  X(Broadcast)                                                 \
+  X(Shuffle)                                                   \
+  X(IntImm)                                                    \
+  X(FloatImm)                                                  \
+  X(StringImm)                                                 \
+  X(Any)
+
+#define TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_STMTS \
+  X(AttrStmt)                                                  \
+  X(IfThenElse)                                                \
+  X(LetStmt)                                                   \
+  X(For)                                                       \
+  X(While)                                                     \
+  X(Allocate)                                                  \
+  X(AllocateConst)                                             \
+  X(DeclBuffer)                                                \
+  X(Store)                                                     \
+  X(BufferStore)                                               \
+  X(BufferRealize)                                             \
+  X(AssertStmt)                                                \
+  X(ProducerStore)                                             \
+  X(ProducerRealize)                                           \
+  X(Prefetch)                                                  \
+  X(SeqStmt)                                                   \
+  X(Evaluate)                                                  \
+  X(Block)                                                     \
+  X(BlockRealize)
+
 class DebugInfoInstaller : public StmtExprMutator {
  public:
   static Stmt InstallInfo(const Stmt& stmt);
@@ -43,67 +95,30 @@ class DebugInfoInstaller : public StmtExprMutator {
  protected:
   DebugInfoInstaller(const Stmt& stmt);
 
-  // PrimExpr VisitExpr_(const VarNode* op) override;
-  // PrimExpr VisitExpr_(const SizeVarNode* op) override;
-  // PrimExpr VisitExpr_(const LoadNode* op) override;
-  // PrimExpr VisitExpr_(const BufferLoadNode* op) override;
-  // PrimExpr VisitExpr_(const ProducerLoadNode* op) override;
-  // PrimExpr VisitExpr_(const LetNode* op) override;
-  PrimExpr VisitExpr_(const CallNode* op) override;
-  PrimExpr VisitExpr_(const AddNode* op) override;
-  PrimExpr VisitExpr_(const SubNode* op) override;
-  PrimExpr VisitExpr_(const MulNode* op) override;
-  PrimExpr VisitExpr_(const DivNode* op) override;
-  PrimExpr VisitExpr_(const ModNode* op) override;
-  PrimExpr VisitExpr_(const FloorDivNode* op) override;
-  PrimExpr VisitExpr_(const FloorModNode* op) override;
-  PrimExpr VisitExpr_(const MinNode* op) override;
-  PrimExpr VisitExpr_(const MaxNode* op) override;
-  PrimExpr VisitExpr_(const EQNode* op) override;
-  PrimExpr VisitExpr_(const NENode* op) override;
-  PrimExpr VisitExpr_(const LTNode* op) override;
-  PrimExpr VisitExpr_(const LENode* op) override;
-  PrimExpr VisitExpr_(const GTNode* op) override;
-  PrimExpr VisitExpr_(const GENode* op) override;
-  PrimExpr VisitExpr_(const AndNode* op) override;
-  PrimExpr VisitExpr_(const OrNode* op) override;
-  PrimExpr VisitExpr_(const ReduceNode* op) override;
-  PrimExpr VisitExpr_(const CastNode* op) override;
-  PrimExpr VisitExpr_(const NotNode* op) override;
-  PrimExpr VisitExpr_(const SelectNode* op) override;
-  PrimExpr VisitExpr_(const RampNode* op) override;
-  PrimExpr VisitExpr_(const BroadcastNode* op) override;
-  PrimExpr VisitExpr_(const ShuffleNode* op) override;
-  PrimExpr VisitExpr_(const IntImmNode* op) override;
-  PrimExpr VisitExpr_(const FloatImmNode* op) override;
-  PrimExpr VisitExpr_(const StringImmNode* op) override;
-  PrimExpr VisitExpr_(const AnyNode* op) override;
+#define X(TypeName) PrimExpr VisitExpr_(const TypeName##Node* op) override;
+  TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_EXPRS
+#undef X
 
-  Stmt VisitStmt_(const AttrStmtNode* op) override;
-  Stmt VisitStmt_(const IfThenElseNode* op) override;
-  Stmt VisitStmt_(const LetStmtNode* op) override;
-  Stmt VisitStmt_(const ForNode* op) override;
-  Stmt VisitStmt_(const WhileNode* op) override;
-  Stmt VisitStmt_(const AllocateNode* op) override;
-  Stmt VisitStmt_(const AllocateConstNode* op) override;
-  Stmt VisitStmt_(const DeclBufferNode* op) override;
-  Stmt VisitStmt_(const StoreNode* op) override;
-  Stmt VisitStmt_(const BufferStoreNode* op) override;
-  Stmt VisitStmt_(const BufferRealizeNode* op) override;
-  Stmt VisitStmt_(const AssertStmtNode* op) override;
-  Stmt VisitStmt_(const ProducerStoreNode* op) override;
-  Stmt VisitStmt_(const ProducerRealizeNode* op) override;
-  Stmt VisitStmt_(const PrefetchNode* op) override;
-  Stmt VisitStmt_(const SeqStmtNode* op) override;
-  Stmt VisitStmt_(const EvaluateNode* op) override;
-  Stmt VisitStmt_(const BlockNode* op) override;
-  Stmt VisitStmt_(const BlockRealizeNode* op) override;
+#define X(TypeName)                                   \
+  Stmt VisitStmt_(const TypeName##Node* op) override; \
+  ;
+  TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_STMTS
+#undef X
 
  private:
   std::vector<std::tuple<const StmtNode*, size_t>> lines_;
   std::vector<std::tuple<const PrimExprNode*, size_t>> expr_lines_;
   std::unordered_map<const StmtNode*, size_t> stmt_lines_;
   std::unordered_map<const PrimExprNode*, size_t> expr_lines_map_;
+
+  template <typename TypeName, typename ObjectName>
+  Stmt add_span(const ObjectName* op) {
+    Stmt new_stmt = StmtExprMutator::VisitStmt_(op);
+    auto new_type = Downcast<TypeName>(new_stmt);
+    auto new_node = new_type.CopyOnWrite();
+    new_node->span = MaybeSpan(op);
+    return new_type;
+  }
 
   Span MaybeSpan(const StmtNode* op);
   Span MaybeSpan(const PrimExprNode* op);

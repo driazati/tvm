@@ -37,15 +37,15 @@ class TIRTextPrinterDebug : public TIRTextPrinter {
   TIRTextPrinterDebug() : TIRTextPrinter(false, &meta_), current_line_(1) {}
 
   std::vector<std::tuple<const PrimExprNode*, size_t>> GetExprLines() const {
-    return expr_node_lines_;
+    return exprs_by_line_;
   }
 
   std::vector<std::tuple<const StmtNode*, size_t>> GetStmtNodeLines() const {
-    return stmt_node_lines_;
+    return stmts_by_line_;
   }
 
  private:
-  Doc NewLine();
+  Doc NewLine() override;
 
 #define X(TypeName) Doc VisitExpr_(const TypeName##Node* op) override;
   TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_EXPRS
@@ -57,16 +57,12 @@ class TIRTextPrinterDebug : public TIRTextPrinter {
 
   TextMetaDataContext meta_;
 
-  std::vector<const StmtNode*> stmt_nodes_;
-  std::vector<const PrimExprNode*> per_line_expr_nodes_;
-
-  // record of lines output per statement
-  std::vector<std::tuple<const StmtNode*, size_t>> stmt_node_lines_;
-  std::vector<std::tuple<const PrimExprNode*, size_t>> expr_node_lines_;
+  // Line that the printer is currently printing
   size_t current_line_;
-  // std::vector<BaseExprNode*> relay_exprs_;
-  std::vector<BaseExprNode*> expr_nodes_;
-  std::vector<std::string> pending_info_;
+
+  // Record of all stmts and exprs and their corresponding line
+  std::vector<std::tuple<const StmtNode*, size_t>> stmts_by_line_;
+  std::vector<std::tuple<const PrimExprNode*, size_t>> exprs_by_line_;
 };
 
 }  // namespace tir

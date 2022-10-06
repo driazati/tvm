@@ -309,8 +309,7 @@ PrimFunc MakePackedAPI(PrimFunc&& func, int num_unpacked_args) {
 
   if (pack_args) {
     std::ostringstream num_args_error;
-    num_args_error << name_hint << ": num_args should be " << num_packed_args << " but found "
-                   << v_num_packed_args;
+    num_args_error << name_hint << ": num_args should be " << num_packed_args;
     std::vector<Stmt> arg_assert = {
         MakeAssertEQ(v_num_packed_args, num_packed_args, num_args_error.str())};
     func_ptr->body =

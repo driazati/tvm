@@ -31,49 +31,14 @@ namespace tvm {
 namespace tir {
 
 Doc TIRTextPrinterDebug::NewLine() {
-  Doc doc;
-  std::cout << "FLUSHING LINES with " << stmt_nodes_.size() << " and "
-            << per_line_expr_nodes_.size() << "\n";
-  doc << " [";
-  for (size_t i = 0; i < stmt_nodes_.size(); i++) {
-    const auto& entry = stmt_nodes_[i];
-    if (entry->span.defined()) {
-      doc << entry->span->source_name->name << ":" << entry->span->line;
-    } else {
-      doc << "missing";
-    }
-    if (i != stmt_nodes_.size() - 1) {
-      doc << " ";
-    }
-
-    stmt_node_lines_.push_back(std::make_tuple(entry, current_line_));
-  }
-  for (size_t i = 0; i < per_line_expr_nodes_.size(); i++) {
-    const auto& entry = per_line_expr_nodes_[i];
-    // if (entry->span.defined()) {
-    //   doc << entry->span->source_name->name << ":" << entry->span->line;
-    // } else {
-    //   doc << "missing";
-    // }
-    // if (i != per_line_expr_nodes_.size() - 1) {
-    //   doc << " ";
-    // }
-
-    expr_node_lines_.push_back(std::make_tuple(entry, current_line_));
-  }
-  // std::cout << "Flushing " << expr_node_lines_.size()
-  per_line_expr_nodes_.clear();
-  stmt_nodes_.clear();
-  doc << "]";
   current_line_ += 1;
-  doc << TIRTextPrinter::NewLine();
-  return doc;
+
+  return TIRTextPrinter::NewLine();
 }
 
 #define X(TypeName)                                               \
   Doc TIRTextPrinterDebug::VisitExpr_(const TypeName##Node* op) { \
-    std::cout << "calling for #TypeName\n";                       \
-    per_line_expr_nodes_.push_back(op);                           \
+    exprs_by_line_.push_back(std::make_tuple(op, current_line_)); \
     return TIRTextPrinter::VisitExpr_(op);                        \
   };
 TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_EXPRS
@@ -81,8 +46,7 @@ TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_EXPRS
 
 #define X(TypeName)                                               \
   Doc TIRTextPrinterDebug::VisitStmt_(const TypeName##Node* op) { \
-    std::cout << "calling stmt for #TypeName\n";                  \
-    stmt_nodes_.push_back(op);                                    \
+    stmts_by_line_.push_back(std::make_tuple(op, current_line_)); \
     return TIRTextPrinter::VisitStmt_(op);                        \
   };
 TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_STMTS

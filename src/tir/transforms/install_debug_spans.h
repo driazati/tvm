@@ -43,7 +43,8 @@ class DebugInfoInstaller : public StmtExprMutator {
   Stmt VisitStmt(const Stmt& stmt) override;
 
  protected:
-  DebugInfoInstaller(const Stmt& stmt);
+  DebugInfoInstaller(const Stmt& stmt, const std::string& filename);
+  DebugInfoInstaller(const Stmt& stmt) : DebugInfoInstaller(stmt, "main.tir") {}
 
 #define X(TypeName) PrimExpr VisitExpr_(const TypeName##Node* op) override;
   TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_EXPRS
@@ -56,10 +57,9 @@ class DebugInfoInstaller : public StmtExprMutator {
 #undef X
 
  private:
-  std::vector<std::tuple<const StmtNode*, size_t>> lines_;
-  std::vector<std::tuple<const PrimExprNode*, size_t>> expr_lines_;
   std::unordered_map<const StmtNode*, size_t> stmt_lines_;
-  std::unordered_map<const PrimExprNode*, size_t> expr_lines_map_;
+  std::unordered_map<const PrimExprNode*, size_t> expr_lines_;
+  std::string filename_;
 
   template <typename TypeName, typename ObjectName>
   Stmt add_span(const ObjectName* op) {

@@ -36,13 +36,11 @@ class TIRTextPrinterDebug : public TIRTextPrinter {
  public:
   TIRTextPrinterDebug() : TIRTextPrinter(false, &meta_), current_line_(1) {}
 
-  std::vector<std::tuple<const PrimExprNode*, size_t>> GetExprLines() const {
+  std::vector<std::tuple<const PrimExprNode*, size_t>> GetExprsByLine() const {
     return exprs_by_line_;
   }
 
-  std::vector<std::tuple<const StmtNode*, size_t>> GetStmtNodeLines() const {
-    return stmts_by_line_;
-  }
+  std::vector<std::tuple<const StmtNode*, size_t>> GetStmtsByLine() const { return stmts_by_line_; }
 
  private:
   Doc NewLine() override;

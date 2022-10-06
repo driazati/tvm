@@ -25,23 +25,7 @@
 
 #include "install_debug_spans.h"
 
-#include <tvm/ir/transform.h>
-#include <tvm/runtime/container/array.h>
-#include <tvm/runtime/container/string.h>
-#include <tvm/tir/analysis.h>
-#include <tvm/tir/expr.h>
-#include <tvm/tir/expr_functor.h>
-#include <tvm/tir/function.h>
-#include <tvm/tir/stmt.h>
-#include <tvm/tir/stmt_functor.h>
 #include <tvm/tir/transform.h>
-
-#include <algorithm>
-#include <iostream>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 #include "../../printer/tir_text_printer_debug.h"
 
@@ -53,26 +37,32 @@ Stmt DebugInfoInstaller::InstallInfo(const Stmt& stmt) {
   return installer.VisitStmt(stmt);
 }
 
-DebugInfoInstaller::DebugInfoInstaller(const Stmt& stmt) {
-  std::cout << "Running DebugInfoInstaller\n";
+DebugInfoInstaller::DebugInfoInstaller(const Stmt& stmt, const std::string& filename) {
+  // Determine the line that each stmt/expr will be printed on
   tvm::tir::TIRTextPrinterDebug printer;
+
+  // Fill in the stmts and exprs' line info
   auto result = printer.Print(stmt).str();
-  // TODO: Make this <name of primfunc>.tir
-  std::ofstream out("main.tir");
-  out << result;
-  out.close();
-  std::cout << result << "\n";
-  lines_ = printer.GetStmtNodeLines();
-  expr_lines_ = printer.GetExprLines();
-  std::cout << "got " << lines_.size() << " stmts and " << expr_lines_.size() << " exprs\n";
-  for (const auto& line : lines_) {
-    // VLOG(0) << "Recorded " << std::get<0>(line) << " @ line " << std::get<1>(line) << "\n";
+
+  // Create map of the stmt/expr -> its line number in the output to later
+  // create new spans for each stmt/expr
+  const auto& stmts = printer.GetStmtsByLine();
+  VLOG(0) << "Debug printer found " << stmts.size() << " stmts after printing";
+  for (const auto& line : stmts) {
     stmt_lines_[std::get<0>(line)] = std::get<1>(line);
   }
-  for (const auto& line : expr_lines_) {
-    // VLOG(0) << "Recorded " << std::get<0>(line) << " @ line " << std::get<1>(line) << "\n";
-    expr_lines_map_[std::get<0>(line)] = std::get<1>(line);
+
+  const auto& exprs = printer.GetExprsByLine();
+  VLOG(0) << "Debug printer found " << exprs.size() << " exprs after printing";
+  for (const auto& line : exprs) {
+    expr_lines_[std::get<0>(line)] = std::get<1>(line);
   }
+
+  // Output the printed TIR to the specified file
+  // TODO: Make this <name of primfunc>.tir
+  std::ofstream out(filename_);
+  out << result;
+  out.close();
 }
 
 PrimExpr DebugInfoInstaller::VisitExpr(const PrimExpr& expr) {
@@ -90,20 +80,22 @@ Stmt DebugInfoInstaller::VisitStmt(const Stmt& stmt) {
 Span DebugInfoInstaller::MaybeSpan(const StmtNode* op) {
   auto entry = stmt_lines_.find(op);
   if (entry == stmt_lines_.end()) {
-    return Span(SourceName::Get("missing-file"), 999, 999, 999, 999);
+    return Span();
   } else {
     size_t column = 0;
-    return Span(SourceName::Get("main.tir"), entry->second, entry->second, column, column);
+    size_t line = entry->second;
+    return Span(SourceName::Get(filename_), line, line, column, column);
   }
 }
 
 Span DebugInfoInstaller::MaybeSpan(const PrimExprNode* op) {
-  auto entry = expr_lines_map_.find(op);
-  if (entry == expr_lines_map_.end()) {
-    return Span(SourceName::Get("missing-expr-file"), 998, 998, 998, 998);
+  auto entry = expr_lines_.find(op);
+  if (entry == expr_lines_.end()) {
+    return Span();
   } else {
     size_t column = 0;
-    return Span(SourceName::Get("main.tir"), entry->second, entry->second, column, column);
+    size_t line = entry->second;
+    return Span(SourceName::Get(filename_), line, line, column, column);
   }
 }
 
@@ -133,7 +125,6 @@ namespace transform {
 
 Pass InstallDebugSpans() {
   auto pass_func = [](PrimFunc f, IRModule m, PassContext ctx) {
-    std::cout << "running info installer\n";
     auto* n = f.CopyOnWrite();
     n->body = DebugInfoInstaller::InstallInfo(std::move(f->body));
 

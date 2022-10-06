@@ -51,7 +51,6 @@
   X(IntImm)                                                    \
   X(FloatImm)                                                  \
   X(StringImm)
-//   X(Any)
 
 #define TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_STMTS \
   X(AttrStmt)                                                  \
@@ -72,4 +71,3 @@
   X(SeqStmt)                                                   \
   X(Evaluate)                                                  \
   X(BlockRealize)
-//   X(Block)

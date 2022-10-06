@@ -274,40 +274,15 @@ class MetaCollector : public StmtExprVisitor {
   TextMetaDataContext* meta_;
 };
 
-class Printer2 : public StmtMutator, public ExprMutator {
-  Stmt VisitStmt_(const AttrStmtNode* op) override;
-  Stmt VisitStmt_(const IfThenElseNode* op) override;
-  Stmt VisitStmt_(const LetStmtNode* op) override;
-  Stmt VisitStmt_(const ForNode* op) override;
-  Stmt VisitStmt_(const WhileNode* op) override;
-  Stmt VisitStmt_(const AllocateNode* op) override;
-  Stmt VisitStmt_(const AllocateConstNode* op) override;
-  Stmt VisitStmt_(const DeclBufferNode* op) override;
-  Stmt VisitStmt_(const StoreNode* op) override;
-  Stmt VisitStmt_(const BufferStoreNode* op) override;
-  Stmt VisitStmt_(const BufferRealizeNode* op) override;
-  Stmt VisitStmt_(const AssertStmtNode* op) override;
-  Stmt VisitStmt_(const ProducerStoreNode* op) override;
-  Stmt VisitStmt_(const ProducerRealizeNode* op) override;
-  Stmt VisitStmt_(const PrefetchNode* op) override;
-  Stmt VisitStmt_(const SeqStmtNode* op) override;
-  Stmt VisitStmt_(const EvaluateNode* op) override;
-  Stmt VisitStmt_(const BlockNode* op) override;
-  Stmt VisitStmt_(const BlockRealizeNode* op) override;
-};
-
 class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
                        public ExprFunctor<Doc(const PrimExpr&)>,
                        public TypeFunctor<Doc(const Type&)> {
  public:
   explicit TIRTextPrinter(bool show_meta, TextMetaDataContext* meta)
-      : show_meta_(show_meta), meta_(meta), meta_collector_(meta), current_line_(1) {
-    register_new_line_hook([&]() { return flushSpans(); });
-  }
+      : show_meta_(show_meta), meta_(meta), meta_collector_(meta), current_line_(1) {}
 
-  ~TIRTextPrinter() { register_new_line_hook(nullptr); }
-
-  Doc flushSpans();
+  /*! \brief Output a newline */
+  Doc NewLine();
 
   /*! \brief Print the node */
   Doc Print(const ObjectRef& node);

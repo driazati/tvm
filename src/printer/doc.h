@@ -163,8 +163,5 @@ class Doc {
   std::vector<DocAtom> stream_;
 };
 
-void register_new_line_hook(std::function<Doc()> fn);
-// void register_new_line_hook(Doc(*fn)());
-
 }  // namespace tvm
 #endif  // TVM_PRINTER_DOC_H_

@@ -480,7 +480,7 @@ runtime::Module TIRToRuntime(const Map<Target, IRModule>& inputs_arg,
       mhost.Import(it);
     }
   }
-  std::cout << "got runtime host module\n";
+
   return mhost;
 }
 

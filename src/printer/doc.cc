@@ -34,13 +34,6 @@
 
 namespace tvm {
 
-std::function<Doc()> new_line_hook_fn;
-
-void register_new_line_hook(std::function<Doc()> fn) {
-  // void register_new_line_hook(Doc(*fn)()) {
-  new_line_hook_fn = fn;
-}
-
 /*!
  * \brief Represent a piece of text in the doc.
  */
@@ -115,14 +108,7 @@ std::string Doc::str() {
   return os.str();
 }
 
-Doc Doc::NewLine(int indent) {
-  Doc result;
-  if (new_line_hook_fn) {
-    result << new_line_hook_fn();
-  }
-  result << DocLine(indent);
-  return result;
-}
+Doc Doc::NewLine(int indent) { return Doc() << DocLine(indent); }
 
 Doc Doc::Text(std::string text) { return Doc() << DocText(text); }
 

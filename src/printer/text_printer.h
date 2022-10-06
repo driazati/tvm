@@ -46,7 +46,6 @@
 #include "doc.h"
 #include "meta_data.h"
 #include "text_printer.h"
-#include "tvm/ir/expr.h"
 
 namespace tvm {
 class TextPrinter;
@@ -279,10 +278,10 @@ class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
                        public TypeFunctor<Doc(const Type&)> {
  public:
   explicit TIRTextPrinter(bool show_meta, TextMetaDataContext* meta)
-      : show_meta_(show_meta), meta_(meta), meta_collector_(meta), current_line_(1) {}
+      : show_meta_(show_meta), meta_(meta), meta_collector_(meta) {}
 
   /*! \brief Output a newline */
-  Doc NewLine();
+  virtual Doc NewLine();
 
   /*! \brief Print the node */
   Doc Print(const ObjectRef& node);
@@ -294,43 +293,7 @@ class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
    */
   bool GetVarName(::tvm::tir::Var v, std::string* s);
 
-  std::vector<std::tuple<const PrimExprNode*, size_t>> GetExprLines() const {
-    return expr_node_lines_;
-  }
-
-  std::vector<std::tuple<const StmtNode*, size_t>> GetStmtNodeLines() const {
-    return stmt_node_lines_;
-  }
-
- private:
-  /*! \brief whether show meta data */
-  bool show_meta_;
-  /*! \brief meta data context */
-  TextMetaDataContext* meta_;
-  /*! \brief meta collector */
-  MetaCollector meta_collector_;
-  /*! \brief Map from Var to Doc */
-  std::unordered_map<Var, Doc, ObjectPtrHash, ObjectPtrEqual> memo_var_;
-  /*! \brief Map from Buffer to Doc */
-  std::unordered_map<Buffer, Doc, ObjectPtrHash, ObjectPtrEqual> memo_buf_;
-  /*! \brief Map from Buffer to Doc */
-  std::unordered_map<DataProducer, Doc, ObjectPtrHash, ObjectPtrEqual> memo_producer_;
-  /*! \brief name allocation map */
-  std::unordered_map<std::string, int> name_alloc_map_;
-
-  std::vector<const StmtNode*> stmt_nodes_;
-  std::vector<const PrimExprNode*> per_line_expr_nodes_;
-
-  // record of lines output per statement
-  std::vector<std::tuple<const StmtNode*, size_t>> stmt_node_lines_;
-  std::vector<std::tuple<const PrimExprNode*, size_t>> expr_node_lines_;
-  size_t current_line_;
-  // std::vector<BaseExprNode*> relay_exprs_;
-  std::vector<BaseExprNode*> expr_nodes_;
-  std::vector<std::string> pending_info_;
-
-  friend class tvm::TextPrinter;
-
+ protected:
   Doc VisitExpr_(const IntImmNode* op) override;
   Doc VisitExpr_(const FloatImmNode* op) override;
   Doc VisitExpr_(const StringImmNode* op) override;
@@ -386,6 +349,24 @@ class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   Doc VisitStmt_(const BlockRealizeNode* op) override;
   Doc VisitStmtDefault_(const Object* op) override;
 
+ private:
+  /*! \brief whether show meta data */
+  bool show_meta_;
+  /*! \brief meta data context */
+  TextMetaDataContext* meta_;
+  /*! \brief meta collector */
+  MetaCollector meta_collector_;
+  /*! \brief Map from Var to Doc */
+  std::unordered_map<Var, Doc, ObjectPtrHash, ObjectPtrEqual> memo_var_;
+  /*! \brief Map from Buffer to Doc */
+  std::unordered_map<Buffer, Doc, ObjectPtrHash, ObjectPtrEqual> memo_buf_;
+  /*! \brief Map from Buffer to Doc */
+  std::unordered_map<DataProducer, Doc, ObjectPtrHash, ObjectPtrEqual> memo_producer_;
+  /*! \brief name allocation map */
+  std::unordered_map<std::string, int> name_alloc_map_;
+
+  friend class tvm::TextPrinter;
+
   Doc VisitType_(const PrimTypeNode* node) override;
   Doc VisitType_(const PointerTypeNode* node) override;
   Doc VisitType_(const TupleTypeNode* node) override;
@@ -401,9 +382,6 @@ class TIRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   Doc DataProducerNode2Doc(const DataProducerNode* op, Doc doc);
   Doc PrintString(const StringObj* op) { return Doc::StrLiteral(op->data); }
   Doc PrintBufferRegion(const BufferRegionNode* op);
-
-  Doc PrintOptionalInfo(const StmtNode* stmt);
-  // Doc PrintOptionalInfo(const BaseExprNode* stmt);
 
   /*!
    * \brief special method to print out data type

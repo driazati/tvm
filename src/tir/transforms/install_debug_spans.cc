@@ -43,7 +43,7 @@
 #include <utility>
 #include <vector>
 
-#include "../../printer/text_printer.h"
+#include "../../printer/tir_text_printer_debug.h"
 
 namespace tvm {
 namespace tir {
@@ -55,8 +55,7 @@ Stmt DebugInfoInstaller::InstallInfo(const Stmt& stmt) {
 
 DebugInfoInstaller::DebugInfoInstaller(const Stmt& stmt) {
   std::cout << "Running DebugInfoInstaller\n";
-  TextMetaDataContext meta;
-  tvm::tir::TIRTextPrinter printer(false, &meta);
+  tvm::tir::TIRTextPrinterDebug printer;
   auto result = printer.Print(stmt).str();
   // TODO: Make this <name of primfunc>.tir
   std::ofstream out("main.tir");
@@ -65,7 +64,7 @@ DebugInfoInstaller::DebugInfoInstaller(const Stmt& stmt) {
   std::cout << result << "\n";
   lines_ = printer.GetStmtNodeLines();
   expr_lines_ = printer.GetExprLines();
-
+  std::cout << "got " << lines_.size() << " stmts and " << expr_lines_.size() << " exprs\n";
   for (const auto& line : lines_) {
     // VLOG(0) << "Recorded " << std::get<0>(line) << " @ line " << std::get<1>(line) << "\n";
     stmt_lines_[std::get<0>(line)] = std::get<1>(line);

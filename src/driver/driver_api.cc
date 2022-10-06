@@ -615,6 +615,7 @@ transform::Sequential DeviceModulePassManager(IRModule mixed_mod, Target target)
   device_pass_list.push_back(tir::transform::LowerCustomDatatypes());
   device_pass_list.push_back(tir::transform::LowerDeviceStorageAccessInfo());
   device_pass_list.push_back(tir::transform::LowerIntrin());
+
   return transform::Sequential(device_pass_list);
 }
 

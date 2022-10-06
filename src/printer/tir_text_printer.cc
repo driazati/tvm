@@ -166,43 +166,7 @@ Doc TIRTextPrinter::PrintPrimFunc(const PrimFunc& prim_func) {
   return doc;
 }
 
-Doc TIRTextPrinter::NewLine() {
-  Doc doc;
-  doc << " [";
-  for (size_t i = 0; i < stmt_nodes_.size(); i++) {
-    const auto& entry = stmt_nodes_[i];
-    if (entry->span.defined()) {
-      doc << entry->span->source_name->name << ":" << entry->span->line;
-    } else {
-      doc << "missing";
-    }
-    if (i != stmt_nodes_.size() - 1) {
-      doc << " ";
-    }
-
-    stmt_node_lines_.push_back(std::make_tuple(entry, current_line_));
-  }
-  for (size_t i = 0; i < per_line_expr_nodes_.size(); i++) {
-    const auto& entry = per_line_expr_nodes_[i];
-    // if (entry->span.defined()) {
-    //   doc << entry->span->source_name->name << ":" << entry->span->line;
-    // } else {
-    //   doc << "missing";
-    // }
-    // if (i != per_line_expr_nodes_.size() - 1) {
-    //   doc << " ";
-    // }
-
-    expr_node_lines_.push_back(std::make_tuple(entry, current_line_));
-  }
-  // std::cout << "Flushing " << expr_node_lines_.size()
-  per_line_expr_nodes_.clear();
-  stmt_nodes_.clear();
-  doc << "]";
-  current_line_ += 1;
-  doc << Doc::NewLine();
-  return doc;
-}
+Doc TIRTextPrinter::NewLine() { return Doc::NewLine(); }
 
 Doc TIRTextPrinter::PrintIRModule(const IRModule& module) {
   const auto* op = module.operator->();
@@ -325,46 +289,36 @@ Doc TIRTextPrinter::PrintBufferRegion(const BufferRegionNode* op) {
 }
 
 Doc TIRTextPrinter::VisitExprDefault_(const Object* op) {
-  // per_line_expr_nodes_.push_back(op);
   return this->meta_->GetMetaNode(GetRef<ObjectRef>(op));
 }
 
 Doc TIRTextPrinter::VisitStmtDefault_(const Object* op) {
-  // per_line_expr_nodes_.push_back(op);
   return this->meta_->GetMetaNode(GetRef<ObjectRef>(op));
 }
 
 Doc TIRTextPrinter::VisitExpr_(const IntImmNode* op) {
-  per_line_expr_nodes_.push_back(op);
   return PrintConstScalar<int64_t>(op->dtype, op->value);
 }
 
 Doc TIRTextPrinter::VisitExpr_(const FloatImmNode* op) {
-  per_line_expr_nodes_.push_back(op);
   return PrintConstScalar<double>(op->dtype, op->value);
 }
 
-Doc TIRTextPrinter::VisitExpr_(const StringImmNode* op) {
-  per_line_expr_nodes_.push_back(op);
-  return Doc::StrLiteral(op->value);
-}
+Doc TIRTextPrinter::VisitExpr_(const StringImmNode* op) { return Doc::StrLiteral(op->value); }
 
 Doc TIRTextPrinter::VisitExpr_(const CastNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "cast(" << PrintDType(op->dtype) << ", " << Print(op->value) << ")";
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const VarNode* op) {
-  per_line_expr_nodes_.push_back(op);
   const Var& var = GetRef<Var>(op);
   return meta_->InMeta(var) ? meta_->GetMetaNode(var) : AllocVar(GetRef<Var>(op));
 }
 
 #define TVM_DECLARE_TIR_TEXT_PRINTER_BINOP(OpName, OpString) \
   Doc TIRTextPrinter::VisitExpr_(const OpName* op) {         \
-    per_line_expr_nodes_.push_back(op);                      \
     Doc doc;                                                 \
     doc << "(" << Print(op->a) << OpString;                  \
     doc << Print(op->b) << ")";                              \
@@ -386,42 +340,36 @@ TVM_DECLARE_TIR_TEXT_PRINTER_BINOP(AndNode, " && ")
 TVM_DECLARE_TIR_TEXT_PRINTER_BINOP(OrNode, " || ")
 
 Doc TIRTextPrinter::VisitExpr_(const FloorDivNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "floordiv(" << Print(op->a) << ", " << Print(op->b) << ")";
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const FloorModNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "floormod(" << Print(op->a) << ", " << Print(op->b) << ")";
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const MinNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "min(" << Print(op->a) << ", " << Print(op->b) << ")";
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const MaxNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "max(" << Print(op->a) << ", " << Print(op->b) << ")";
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const NotNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "!" << Print(op->a);
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const SelectNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "select(" << Print(op->condition) << ", " << Print(op->true_value) << ", "
       << Print(op->false_value) << ")";
@@ -429,7 +377,6 @@ Doc TIRTextPrinter::VisitExpr_(const SelectNode* op) {
 }
 
 Doc TIRTextPrinter::VisitExpr_(const BufferLoadNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << Print(op->buffer) << Print(op->indices);
   return doc;
@@ -437,14 +384,12 @@ Doc TIRTextPrinter::VisitExpr_(const BufferLoadNode* op) {
 
 Doc TIRTextPrinter::VisitExpr_(const ProducerLoadNode* op) {
   // TODO(tvm-team): consider make a better text format for producer.
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << op->producer->GetNameHint() << Print(op->indices);
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const LoadNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "(" << PrintDType(op->dtype) << "*)" << Print(op->buffer_var) << "[" << Print(op->index)
       << "]";
@@ -455,7 +400,6 @@ Doc TIRTextPrinter::VisitExpr_(const LoadNode* op) {
 }
 
 Doc TIRTextPrinter::VisitExpr_(const RampNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "ramp(" << Print(op->base) << ", " << Print(op->stride) << ", " << op->lanes << ")";
   return doc;
@@ -468,14 +412,12 @@ Doc TIRTextPrinter::VisitExpr_(const BroadcastNode* op) {
 }
 
 Doc TIRTextPrinter::VisitExpr_(const LetNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "let " << Print(op->var) << " = " << Print(op->value) << " in " << Print(op->body);
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const CallNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   std::vector<Doc> func_args;
   if (auto* ptr_op = op->op.as<OpNode>()) {
@@ -507,14 +449,12 @@ Doc TIRTextPrinter::VisitExpr_(const CallNode* op) {
 }
 
 Doc TIRTextPrinter::VisitExpr_(const ShuffleNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "shuffle(" << Print(op->vectors) << ", " << Print(op->indices) << ")";
   return doc;
 }
 
 Doc TIRTextPrinter::VisitExpr_(const ReduceNode* op) {
-  per_line_expr_nodes_.push_back(op);
   Doc doc;
   doc << "reduce(" << Print(op->combiner) << ", " << Print(op->source) << ", " << Print(op->axis)
       << ", " << op->value_index << ", " << Print(op->init) << ")";
@@ -522,14 +462,12 @@ Doc TIRTextPrinter::VisitExpr_(const ReduceNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const LetStmtNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "let " << Print(op->var) << " = " << Print(op->value) << NewLine() << Print(op->body);
   return doc;
 }
 
 Doc TIRTextPrinter::VisitStmt_(const AttrStmtNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   meta_collector_.Collect(op->node);
   doc << "attr [" << Print(op->node) << "] " << Doc::StrLiteral(op->attr_key) << " = "
@@ -543,7 +481,6 @@ Doc TIRTextPrinter::VisitStmt_(const AttrStmtNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const AssertStmtNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "assert(" << Print(op->condition) << ", " << Print(op->message) << ")" << NewLine()
       << Print(op->body);
@@ -551,7 +488,6 @@ Doc TIRTextPrinter::VisitStmt_(const AssertStmtNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const StoreNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << Print(op->buffer_var) << "[" << Print(op->index) << "] = " << Print(op->value);
   if (!is_one(op->predicate)) {
@@ -561,21 +497,18 @@ Doc TIRTextPrinter::VisitStmt_(const StoreNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const BufferStoreNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << Print(op->buffer) << Print(op->indices) << " = " << Print(op->value);
   return doc;
 }
 
 Doc TIRTextPrinter::VisitStmt_(const ProducerStoreNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << Print(op->producer) << Print(op->indices) << " = " << Print(op->value);
   return doc;
 }
 
 Doc TIRTextPrinter::VisitStmt_(const BufferRealizeNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "realize(" << Print(op->buffer) << ", " << Print(op->bounds) << ", "
       << Print(op->condition) << PrintBody(op->body) << ")";
@@ -583,7 +516,6 @@ Doc TIRTextPrinter::VisitStmt_(const BufferRealizeNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const ProducerRealizeNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "producer_realize(" << Print(op->producer) << ", " << Print(op->bounds) << ", "
       << Print(op->condition) << ", " << PrintBody(op->body) << ")";
@@ -591,7 +523,6 @@ Doc TIRTextPrinter::VisitStmt_(const ProducerRealizeNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const AllocateNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   auto scope = GetPtrStorageScope(op->buffer_var);
   doc << "allocate(" << Print(op->buffer_var) << ", ";
@@ -616,7 +547,6 @@ Doc TIRTextPrinter::VisitStmt_(const AllocateNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const AllocateConstNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "constant(" << Print(op->buffer_var) << ", " << PrintDType(op->dtype) << ", "
       << Print(op->extents) << ")";
@@ -630,7 +560,6 @@ Doc TIRTextPrinter::VisitStmt_(const AllocateConstNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const DeclBufferNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << AllocBuf(op->buffer) << " = decl_buffer(" << Print(op->buffer->data) << ", "
       << PrintDType(op->buffer->dtype) << ", " << Print(op->buffer->shape) << ")" << NewLine();
@@ -643,7 +572,6 @@ Doc TIRTextPrinter::VisitStmt_(const DeclBufferNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const IfThenElseNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "if " << Print(op->condition) << PrintBody(op->then_case);
   if (!is_one(op->condition) && op->else_case.defined()) {
@@ -663,14 +591,12 @@ Doc TIRTextPrinter::VisitStmt_(const SeqStmtNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const EvaluateNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << Print(op->value);
   return doc;
 }
 
 Doc TIRTextPrinter::VisitStmt_(const ForNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "for (" << Print(op->loop_var) << ", " << Print(op->min) << ", "
       << Print(op->min + op->extent) << ")";
@@ -682,7 +608,6 @@ Doc TIRTextPrinter::VisitStmt_(const ForNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const WhileNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "while (" << Print(op->condition) << ")";
   doc << PrintBody(op->body);
@@ -690,14 +615,12 @@ Doc TIRTextPrinter::VisitStmt_(const WhileNode* op) {
 }
 
 Doc TIRTextPrinter::VisitStmt_(const PrefetchNode* op) {
-  stmt_nodes_.push_back(op);
   Doc doc;
   doc << "prefetch(" << Print(op->buffer) << ", " << Print(op->bounds) << ")";
   return doc;
 }
 
 Doc TIRTextPrinter::VisitStmt_(const BlockRealizeNode* op) {
-  stmt_nodes_.push_back(op);
   const auto* block_op = op->block.as<BlockNode>();
   // print block name and block vars
   Doc doc;

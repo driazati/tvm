@@ -30,60 +30,10 @@
 #include <tvm/tir/stmt.h>
 #include <tvm/tir/stmt_functor.h>
 
+#include "install_debug_spans_ops.h"
+
 namespace tvm {
 namespace tir {
-
-#define TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_EXPRS \
-  X(Call)                                                      \
-  X(Add)                                                       \
-  X(Sub)                                                       \
-  X(Mul)                                                       \
-  X(Div)                                                       \
-  X(Mod)                                                       \
-  X(FloorDiv)                                                  \
-  X(FloorMod)                                                  \
-  X(Min)                                                       \
-  X(Max)                                                       \
-  X(EQ)                                                        \
-  X(NE)                                                        \
-  X(LT)                                                        \
-  X(LE)                                                        \
-  X(GT)                                                        \
-  X(GE)                                                        \
-  X(And)                                                       \
-  X(Or)                                                        \
-  X(Reduce)                                                    \
-  X(Cast)                                                      \
-  X(Not)                                                       \
-  X(Select)                                                    \
-  X(Ramp)                                                      \
-  X(Broadcast)                                                 \
-  X(Shuffle)                                                   \
-  X(IntImm)                                                    \
-  X(FloatImm)                                                  \
-  X(StringImm)                                                 \
-  X(Any)
-
-#define TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_STMTS \
-  X(AttrStmt)                                                  \
-  X(IfThenElse)                                                \
-  X(LetStmt)                                                   \
-  X(For)                                                       \
-  X(While)                                                     \
-  X(Allocate)                                                  \
-  X(AllocateConst)                                             \
-  X(DeclBuffer)                                                \
-  X(Store)                                                     \
-  X(BufferStore)                                               \
-  X(BufferRealize)                                             \
-  X(AssertStmt)                                                \
-  X(ProducerStore)                                             \
-  X(ProducerRealize)                                           \
-  X(Prefetch)                                                  \
-  X(SeqStmt)                                                   \
-  X(Evaluate)                                                  \
-  X(Block)                                                     \
-  X(BlockRealize)
 
 class DebugInfoInstaller : public StmtExprMutator {
  public:

@@ -58,7 +58,8 @@ def test_llvm_ir_debug_info():
                     assert 1 == 0, "Some numbers"
                     B[vi] = A[vi] + 1.0
 
-    runtime_module = tvm.build(MyModule, target="llvm")
+    with tvm.transform.PassContext(opt_level=3, config={"tir.enable_debug": True}):
+        runtime_module = tvm.build(MyModule, target="llvm")
 
     source = runtime_module.get_source()
 

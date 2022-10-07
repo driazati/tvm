@@ -33,8 +33,18 @@ namespace tvm {
 namespace tir {
 
 Stmt DebugInfoInstaller::InstallInfo(const Stmt& stmt) {
-  DebugInfoInstaller installer(stmt);
-  return installer.VisitStmt(stmt);
+  DebugInfoInstaller installer(stmt, "main.tir");
+  auto result = installer.VisitStmt(stmt);
+
+  // TODO: remove debugging code
+  tvm::tir::TIRTextPrinterDebug printer;
+  // Fill in the stmts and exprs' line info
+  auto printed_with_spans = printer.Print(result).str();
+  std::ofstream out("filled-main.tir");
+  out << printed_with_spans;
+  out.close();
+
+  return result;
 }
 
 DebugInfoInstaller::DebugInfoInstaller(const Stmt& stmt, const std::string& filename) {
@@ -60,6 +70,8 @@ DebugInfoInstaller::DebugInfoInstaller(const Stmt& stmt, const std::string& file
 
   // Output the printed TIR to the specified file
   // TODO: Make this <name of primfunc>.tir
+  filename_ = std::move(filename);
+  std::cout << "Writing file to " << filename_ << "\n";
   std::ofstream out(filename_);
   out << result;
   out.close();

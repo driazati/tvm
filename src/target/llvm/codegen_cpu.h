@@ -24,6 +24,7 @@
 #ifndef TVM_TARGET_LLVM_CODEGEN_CPU_H_
 #define TVM_TARGET_LLVM_CODEGEN_CPU_H_
 
+#include <llvm/IR/DebugInfoMetadata.h>
 #ifdef TVM_LLVM_VERSION
 
 #include <memory>
@@ -139,8 +140,7 @@ class CodeGenCPU : public CodeGenLLVM {
   llvm::Value* GetPackedFuncHandle(const std::string& str);
   TypedPointer PackClosureData(const Array<Var>& fields, uint64_t* num_bytes,
                                std::string struct_name = "");
-  TypedPointer CreateStructRefPtr(DataType t, llvm::Value* buffer, llvm::Value* index, int kind,
-                                  Span span);
+  TypedPointer CreateStructRefPtr(DataType t, llvm::Value* buffer, llvm::Value* index, int kind);
   void UnpackClosureData(TypedPointer cdata, const Array<Var>& fields,
                          std::unordered_map<const VarNode*, llvm::Value*>* vmap);
   // Make packed call.
@@ -164,7 +164,8 @@ class CodeGenCPU : public CodeGenLLVM {
   // Check if the call to packed function is successful
   // if not directly finalize function and pass on return code.
   // return the end block after the check
-  llvm::BasicBlock* CheckCallSuccess(llvm::Value* retcode, const Span& span);
+  llvm::BasicBlock* CheckCallSuccess(llvm::Value* retcode);
+  llvm::DISubprogram* CreateDebugFunction(const PrimFunc& f);
   // Context for injection lookup
   llvm::GlobalVariable* gv_mod_ctx_{nullptr};
   llvm::GlobalVariable* gv_tvm_func_call_{nullptr};
@@ -190,7 +191,6 @@ class CodeGenCPU : public CodeGenLLVM {
   std::vector<std::pair<std::string, llvm::Function*>> registry_functions_;
   // internal debug information, to be populated by
   std::unique_ptr<DebugInfo> dbg_info_;
-
   bool target_c_runtime_;
   bool is_system_lib_;
 

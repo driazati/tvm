@@ -30,10 +30,44 @@
 namespace tvm {
 namespace tir {
 
+std::string span_text(const Span& span) {
+  if (!span.defined()) {
+    return "missing";
+  }
+  // return "ok";
+  std::string source("file");
+  // if (span->source_name.defined()) {
+  //   source = span->source_name->name;
+  // }
+  return source + ":" + std::to_string(span->line) + ":" +
+         std::to_string(span->column);
+}
+
 Doc TIRTextPrinterDebug::NewLine() {
   current_line_ += 1;
 
-  return TIRTextPrinter::NewLine();
+  Doc doc;
+
+  // doc << "expr[";
+  // for (const auto& item : exprs_by_line_) {
+  //   if (std::get<1>(item) == current_line_ - 1) {
+  //     const PrimExprNode* op = std::get<0>(item);
+  //     doc << span_text(op->span) << ", ";
+  //     std::cout << "found op at line " << current_line_ - 1 << "\n";
+  //   }
+  // }
+  // doc << "] stmt[";
+  doc << "stmt[";
+  for (const auto& item : stmts_by_line_) {
+    if (std::get<1>(item) == current_line_ - 1) {
+      const StmtNode* op = std::get<0>(item);
+      doc << span_text(op->span) << ", ";
+      std::cout << "found op at line " << current_line_ - 1 << ": " << span_text(op->span) << "\n";
+    }
+  }
+  doc << "]";
+  doc << TIRTextPrinter::NewLine();
+  return doc;
 }
 
 #define X(TypeName)                                               \

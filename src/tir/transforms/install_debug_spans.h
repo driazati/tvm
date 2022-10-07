@@ -44,7 +44,6 @@ class DebugInfoInstaller : public StmtExprMutator {
 
  protected:
   DebugInfoInstaller(const Stmt& stmt, const std::string& filename);
-  DebugInfoInstaller(const Stmt& stmt) : DebugInfoInstaller(stmt, "main.tir") {}
 
 #define X(TypeName) PrimExpr VisitExpr_(const TypeName##Node* op) override;
   TVM_TIR_TRANSFORMS_INSTALL_DEBUG_SPANS_SUPPORTED_EXPRS

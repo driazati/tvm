@@ -52,7 +52,7 @@ from tvm.contrib.download import download_testdata
 #   executed on the target device, e.g. Jetson Nano. And we assume it
 #   has Linux running.
 #
-# Since we do compilation on local machine, the remote device is only used
+# Since we do compilation on a local machine, the remote device is only used
 # for running the generated code. We only need to build tvm runtime on
 # the remote device.
 #

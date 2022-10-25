@@ -36,7 +36,7 @@ concurrency:
 
 jobs:
   MacOS:
-    if: ${{ github.repository == 'driazati/tvm' }}
+    if: ${{ github.repository == 'apache/tvm' }}
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v2

@@ -16,8 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set -e
-set -u
+set -euxo pipefail
 
 GPU_OPT=""
 TOOLCHAIN_OPT=""

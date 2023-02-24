@@ -49,6 +49,11 @@ if __name__ == "__main__":
     if use_sccache:
         if args.sccache_bucket:
             env["SCCACHE_BUCKET"] = args.sccache_bucket
+            env["SCCACHE_REGION"] = "us-west-2"
+
+            # authorization in CI is done via IAM roles on the EC2 instances
+            # themselves, so no explicit credentials are needed
+            env["SCCACHE_S3_NO_CREDENTIALS"] = "1"
             logging.info(f"Using sccache bucket: {args.sccache_bucket}")
         else:
             logging.info(f"No sccache bucket set, using local cache")
